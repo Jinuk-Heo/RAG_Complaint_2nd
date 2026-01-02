@@ -1,0 +1,28 @@
+# [Common] OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+.env
+.env.*
+
+# [Backend/Java] Maven & Spring
+target/
+!.mvn/wrapper/maven-wrapper.jar
+build/
+.gradle/
+bin/
+application.properties
+
+# [AI-Server/Python] venv & Cache
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# [Frontend/React] node_modules
+node_modules/
+/frontend/build/
+/frontend/dist/
