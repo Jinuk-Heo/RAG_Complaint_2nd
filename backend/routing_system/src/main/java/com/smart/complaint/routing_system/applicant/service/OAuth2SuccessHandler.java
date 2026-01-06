@@ -21,11 +21,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
         // OAuth2Service에서 설정한 속성들 추출
+        String id = authentication.getName();
         String name = oAuth2User.getAttribute("name");
-        String email = oAuth2User.getAttribute("email");
 
         // JWT 생성
-        String token = tokenProvider.createJwtToken(name, email);
+        String token = tokenProvider.createJwtToken(name, id);
 
         // 프론트엔드(8000포트)로 토큰을 쿼리 스트링에 담아 리다이렉트
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:8080/api/home")

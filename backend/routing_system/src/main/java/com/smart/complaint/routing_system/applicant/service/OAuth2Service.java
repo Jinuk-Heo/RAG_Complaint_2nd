@@ -29,7 +29,7 @@ public class OAuth2Service extends DefaultOAuth2UserService {
         OAuth2Attributes attributes = OAuth2Attributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
         // 현재는 로그만
-        System.out.println("로그인 유저 이메일: " + attributes.email());
+        System.out.println("로그인 유저 이메일: " + attributes.id());
         System.out.println("로그인 유저 이름: " + attributes.name());
 
         return new DefaultOAuth2User(

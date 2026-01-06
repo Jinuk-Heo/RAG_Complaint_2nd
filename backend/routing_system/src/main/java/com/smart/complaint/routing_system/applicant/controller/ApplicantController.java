@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 import java.util.Map;
 
+// 민원인 컨트롤러
 @RestController
 @RequiredArgsConstructor
 public class ApplicantController {
@@ -24,8 +25,8 @@ public class ApplicantController {
         }
 
         Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", principal.getAttribute("id"));
         userInfo.put("name", principal.getName());
-        userInfo.put("email", principal.getAttribute("email"));
 
         return ResponseEntity.ok(userInfo);
     }
