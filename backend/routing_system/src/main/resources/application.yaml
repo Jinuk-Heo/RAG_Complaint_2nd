@@ -4,7 +4,24 @@ spring:
   docker:
     compose:
       enabled: false
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: ${DB_USERNAME:myuser}
+    password: ${DB_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+
+    # JPA 설정 (SQL 로그 )
+  jpa:
+    hibernate:
+      ddl-auto: update # 엔티티 변경되면 테이블도 자동 수정
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+# 파이썬 서버(8080)와 충돌 방지
+server:
+  port: 8090
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
