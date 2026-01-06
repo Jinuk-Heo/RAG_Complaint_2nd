@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 로그인 하지 않은 사용자도 아래 url에는 접근을 허용
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login/**").permitAll()
+                        .requestMatchers("/", "/login/**", "/agent/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2

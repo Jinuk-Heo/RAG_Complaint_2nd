@@ -24,10 +24,12 @@ public class ApplicantController {
             return null;
         }
 
+        // 로그인한 사용자의 정보를 담아서 전송
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", principal.getAttribute("id"));
         userInfo.put("name", principal.getName());
 
+        // TODO: 확인용, 이후 변경할 것
         return ResponseEntity.ok(userInfo);
     }
 

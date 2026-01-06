@@ -22,9 +22,11 @@ services:
     image: langflowai/langflow:latest
     ports:
       - "7860:7860"
+    volumes:
+      # 로컬의 ./langflow_data 폴더를 컨테이너 내부의 저장소와 연결합니다.
+      - ./langflow_data:/app/langflow
     environment:
-      - LANGFLOW_HOST=0.0.0.0
-      #- LANGFLOW_DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/complaint_db
+      - LANGFLOW_DATABASE_URL=sqlite:////app/langflow/langflow.db
     depends_on:
       - db
     networks:
