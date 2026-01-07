@@ -4,10 +4,21 @@ spring:
   docker:
     compose:
       enabled: false
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: ${DB_USERNAME:myuser}
+    password: ${DB_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+
+    # JPA 설정 (SQL 로그 )
+  jpa:
+    hibernate:
+      ddl-auto: update # 엔티티 변경되면 테이블도 자동 수정
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
   security:
     oauth2:
       client:
@@ -37,4 +48,11 @@ spring:
             authorization-uri: https://kauth.kakao.com/oauth/authorize
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
-            user-name-attribute: id # 카카오는 id가 식별자
+            user-name-attribute: id
+# 파이썬 서버(8080)와 충돌 방지
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
