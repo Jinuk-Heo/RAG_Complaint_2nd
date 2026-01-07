@@ -1,8 +1,9 @@
 package com.smart.complaint.routing_system.applicant.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order; // ★ 순서 정하기용
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer; // ★ 스웨거용
@@ -11,10 +12,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import com.smart.complaint.routing_system.applicant.service.jwt.JwtAuthenticationFilter;
+import com.smart.complaint.routing_system.applicant.service.jwt.JwtTokenProvider;
+import com.smart.complaint.routing_system.applicant.service.jwt.OAuth2Service;
+import com.smart.complaint.routing_system.applicant.service.jwt.OAuth2SuccessHandler;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final OAuth2Service oAuth2Service;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // 비밀번호 암호화 도구
     @Bean
@@ -22,7 +32,8 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Swagger 등 정적 리소스는 보안 필터 아예 거치지 않게 무시 (500 에러 해결)
+    // Swagger 등 정적 리소스는 보안 필터 아예 거치지 않게 무시
+    // 개발 완료후 application.yaml Swagger off
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
@@ -45,7 +56,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/agent/login").permitAll() // 로그인은 누구나 접속 가능
-                        .anyRequest().authenticated() // 그 외 공무원 기능은 로그인 필수
+                        .anyRequest().hasAnyRole("AGENT", "ADMIN")
                 );
 
         return http.build();
@@ -56,7 +67,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain publicFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/auth/**", "/api/complaint/**", "/api/**") // 나머지 API들
+                .securityMatcher("/api/auth/**", "/api/complaint/**", "/**") // 나머지 API들
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configure(http))
 
@@ -69,10 +80,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll() // 시민 로그인/회원가입 허용
                         // .anyRequest().authenticated() // 원래는 막아야 하지만, 개발 중이니 일단 열어둠 (필요 시 주석 해제)
                         .anyRequest().permitAll()
-                );
+                )
 
-        // 추후 JwtFilter가 오면 여기에
-        // .addFilterBefore(new JwtFilter(), UsernamePasswordAuthenticationFilter.class);
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2Service))
+                        .successHandler(oAuth2SuccessHandler)
+                )
+                //추후 JwtFilter가 오면 여기에
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+
+        //
+        //
 
         return http.build();
     }
