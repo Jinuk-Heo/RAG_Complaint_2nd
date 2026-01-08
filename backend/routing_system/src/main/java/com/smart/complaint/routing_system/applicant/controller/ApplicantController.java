@@ -35,6 +35,16 @@ public class ApplicantController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/api/complaints")
+    public ResponseEntity<List<ComplaintDto>> getAllComplaints(@AuthenticationPrincipal String applicantId) {
+
+        System.out.println("현재 로그인한 사용자:" + applicantId);
+        // 현재 로그인한 사용자의 모든 민원 조회
+        List<ComplaintDto> complaints = applicantService.getAllComplaints(applicantId);
+
+        return ResponseEntity.ok(complaints);
+    }
+
     @PostMapping("/api/complaints")
     public ResponseEntity<NormalizationResponse> sendComplaints(@AuthenticationPrincipal String applicantId,
             @RequestBody ComplaintDto request) {
@@ -51,14 +61,5 @@ public class ApplicantController {
         });
 
         return ResponseEntity.ok(null);
-    }
-
-    @GetMapping("/api/complaints")
-    public ResponseEntity<List<ComplaintDto>> getAllComplaints(@AuthenticationPrincipal String applicantId) {
-
-        // 현재 로그인한 사용자의 모든 민원 조회
-        List<ComplaintDto> complaints = applicantService.getAllComplaints(applicantId);
-
-        return ResponseEntity.ok(complaints);
     }
 }

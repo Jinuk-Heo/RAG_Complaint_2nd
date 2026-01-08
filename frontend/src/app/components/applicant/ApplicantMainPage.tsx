@@ -3,6 +3,7 @@ import { Toolbar } from './toolbar';
 import { RecentComplaints } from './recent-complaints';
 import { ResponseTimeStats } from './response-time-stats';
 import { KeywordCloud } from './keyword-cloud';
+import { useNavigate } from 'react-router-dom';
 
 
 // TODO: Mock data - 나중에 백엔드 API 연동 시 교체 필요
@@ -71,18 +72,24 @@ const mockKeywords = [
 ];
 
 const ApplicantMainPage = () => {
-    const handleViewComplaints = () => {
+
+  const navigate = useNavigate();
+  
+  const handleViewComplaints = () => {
     console.log('과거 민원 보기');
+    navigate('/applicant/complaints');
     // Navigate to complaints list view
   };
 
   const handleNewComplaint = () => {
     console.log('새 민원 작성');
+    navigate('/applicant/complaints/new');
     // Navigate to new complaint form
   };
 
   const handleLogout = () => {
     console.log('로그아웃');
+    navigate('/applicant/logout');
     // Perform logout action
   };
 
@@ -93,16 +100,16 @@ const ApplicantMainPage = () => {
         onNewComplaint={handleNewComplaint}
         onLogout={handleLogout}
       />
-      
+
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="space-y-8">
           {/* Recent Complaints */}
           <RecentComplaints complaints={mockRecentComplaints} />
-          
+
           {/* Stats and Keywords Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <ResponseTimeStats 
-              data={mockResponseTimeData} 
+            <ResponseTimeStats
+              data={mockResponseTimeData}
               overallStats={mockOverallStats}
             />
             <KeywordCloud keywords={mockKeywords} />
