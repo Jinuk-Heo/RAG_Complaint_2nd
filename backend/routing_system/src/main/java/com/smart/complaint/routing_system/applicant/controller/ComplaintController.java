@@ -5,8 +5,6 @@ import com.smart.complaint.routing_system.applicant.dto.ComplaintResponse;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintSearchCondition;
 import com.smart.complaint.routing_system.applicant.repository.ComplaintRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
