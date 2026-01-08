@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LoginPage } from './components/LoginPage';
+import { LoginPage } from './components/applicant/LoginPage';
 import { Layout } from './components/Layout';
 import { ComplaintListPage } from './components/ComplaintListPage';
 import { ComplaintDetailPage } from './components/ComplaintDetailPage';
@@ -12,9 +12,9 @@ import { KnowledgeBaseDetailPage } from './components/KnowledgeBaseDetailPage';
 import { UserManagementPage } from './components/UserManagementPage';
 import { Toaster } from './components/ui/sonner';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import ApplicantLoginPage from './components/ApplicantLoginPage';
-import ApplicantMainPage from './components/ApplicantMainPage';
-import LoginSuccess from './components/LoginSuccess';
+import ApplicantLoginPage from './components/applicant/ApplicantLoginPage';
+import ApplicantMainPage from './components/applicant/ApplicantMainPage';
+import LoginSuccess from './components/applicant/LoginSuccess';
 //import ComplaintForm from './ComplaintForm';
 
 type Page =
