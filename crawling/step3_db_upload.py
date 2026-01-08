@@ -10,7 +10,7 @@ DB_CONFIG = {
     "host": "localhost",
     "database": "complaint_db",
     "user": "postgres",
-    "password": "0000", # ★ 집 비밀번호 확인 필요
+    "password": "0000", # 비밀번호 확인 필요
     "port": "5432"
 }
 
@@ -67,13 +67,12 @@ def upload_to_db_bulk():
                         True                   # is_current
                     ))
 
-                # ★ [수정 완료] created_at 제거 (DB 자동 생성)
+                # ★ created_at 제거 (DB 자동 생성)
                 insert_norm_query = """
                     INSERT INTO complaint_normalizations (complaint_id, neutral_summary, embedding, is_current)
                     VALUES %s
                 """
                 
-                # 여기서 한방에 넣습니다 (속도 빠름)
                 execute_values(cursor, insert_norm_query, norm_data)
                 conn.commit()
 
