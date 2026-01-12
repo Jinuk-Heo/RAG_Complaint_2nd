@@ -40,7 +40,7 @@ public class QComplaint extends EntityPathBase<Complaint> {
 
     public final NumberPath<Long> id = createNumber("id", Long.class);
 
-    public final NumberPath<Long> incidentId = createNumber("incidentId", Long.class);
+    public final QIncident incident;
 
     public final DateTimePath<java.time.LocalDateTime> incidentLinkedAt = createDateTime("incidentLinkedAt", java.time.LocalDateTime.class);
 
@@ -79,6 +79,7 @@ public class QComplaint extends EntityPathBase<Complaint> {
     public QComplaint(Class<? extends Complaint> type, PathMetadata metadata, PathInits inits) {
         super(type, metadata, inits);
         this.district = inits.isInitialized("district") ? new QDistrict(forProperty("district")) : null;
+        this.incident = inits.isInitialized("incident") ? new QIncident(forProperty("incident")) : null;
     }
 
 }

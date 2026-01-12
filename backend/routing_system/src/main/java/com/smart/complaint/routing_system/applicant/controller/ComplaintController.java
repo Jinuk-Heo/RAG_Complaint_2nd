@@ -1,16 +1,14 @@
 package com.smart.complaint.routing_system.applicant.controller;
 
 
+import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailResponse;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintResponse;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintSearchCondition;
 import com.smart.complaint.routing_system.applicant.repository.ComplaintRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,5 +29,10 @@ public class ComplaintController {
         Long myDepartmentId = 3L;
 
         return complaintRepository.search(myDepartmentId, condition);
+    }
+
+    @GetMapping("/{id}")
+    public ComplaintDetailResponse getComplaintDetail(@PathVariable Long id) {
+        return complaintRepository.getComplaintDetail(id);
     }
 }

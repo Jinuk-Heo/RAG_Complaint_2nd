@@ -37,6 +37,9 @@ public class Complaint {
     @Column(columnDefinition = "TEXT")
     private String answer;
 
+    @Column(name = "answered_at") // 답변 완료 시간 (필요시 추가)
+    private LocalDateTime answeredAt;
+
     @Column(name = "address_text")
     private String addressText;
 
@@ -66,8 +69,16 @@ public class Complaint {
     @Column(name = "current_department_id")
     private Long currentDepartmentId;
 
-    @Column(name = "incident_id")
-    private Long incidentId;
+//    @Column(name = "incident_id")
+//    private Long incidentId;
+
+    //AI 최초 예측 부서 (성능 측정용)
+    @Column(name = "ai_predicted_department_id")
+    private Long aiPredictedDepartmentId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "incident_id")
+    private Incident incident;
 
     @Column(name = "incident_linked_at")
     private LocalDateTime incidentLinkedAt;
@@ -85,4 +96,18 @@ public class Complaint {
 
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
+
+    //  담당자 지정
+    public void assignManager(Long managerId) {
+        this.answeredBy = managerId;
+        this.status = ComplaintStatus.IN_PROGRESS;
+    }
+
+    // 답변 등록 및 종결
+    public void completeAnswer(String answerContent) {
+        this.answer = answerContent;
+        this.answeredAt = LocalDateTime.now();
+        this.status = ComplaintStatus.CLOSED; // 혹은 RESOLVED
+        this.closedAt = LocalDateTime.now();
+    }
 }

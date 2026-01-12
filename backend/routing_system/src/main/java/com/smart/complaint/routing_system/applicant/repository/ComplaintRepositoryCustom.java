@@ -1,5 +1,6 @@
 package com.smart.complaint.routing_system.applicant.repository;
 
+import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailResponse;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintResponse;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintSearchCondition;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintSearchResult;
@@ -10,4 +11,6 @@ public interface ComplaintRepositoryCustom {
     List<ComplaintResponse> search(Long departmentId, ComplaintSearchCondition condition);
 
     List<ComplaintSearchResult> findSimilarComplaint(double[] queryEmbedding, int limit);
+
+    public ComplaintDetailResponse getComplaintDetail(Long complaintId);
 }
