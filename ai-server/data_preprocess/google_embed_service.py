@@ -9,7 +9,7 @@ DB_CONFIG = {
     "host": "localhost",
     "database": "postgres",
     "user": "postgres",
-    "password": "0000",
+    "password": "sangpw",
     "port": 5432
 }
 
@@ -17,7 +17,7 @@ OLLAMA_URL = "http://localhost:11434/api/embeddings"
 EMBED_MODEL = "mxbai-embed-large"
 
 # 정제된 데이터가 담긴 CSV 파일명
-CSV_FILE = "강동구_structured_final.csv" 
+CSV_FILE = "C:\\Users\\sangh\\Desktop\\Meta_Poject2\\RAG_Complaint_Classifier\\ai-server\\data_preprocess\\강동구_structured_final.csv"
 
 def get_embedding(text):
     # mxbai-embed-large 모델 권장 접두사 'doc: ' 추가
@@ -68,7 +68,7 @@ def migrate_final_data():
                 row.get('complaint_id', i + 1), # 원본 ID 매핑
                 raw_search_text,                # neutral_summary (검색 원문을 요약 컬럼에 보존)
                 row['topic'],                   # core_request (핵심 요약)
-                row['keywords'],                # target_object (키워드 문자열)
+                row['category'],                # target_object (키워드 문자열)
                 Json(keywords_list),            # keywords_jsonb (JSONB 타입)
                 vector,                         # 1024차원 벡터
                 row['resp_dept'],                # resp_dept (부서 정보)
