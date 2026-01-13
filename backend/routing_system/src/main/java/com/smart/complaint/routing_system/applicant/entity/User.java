@@ -27,11 +27,4 @@ public class User {
     @Column(nullable = false)
     private UserRole role;
 
-    // 테스트용 생성자 (회원가입 로직)
-    public User(String username, String password, String displayName, UserRole role) {
-        this.username = username;
-        this.password = password;
-        this.displayName = displayName;
-        this.role = role;
-    }
 }

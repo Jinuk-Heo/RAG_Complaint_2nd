@@ -29,16 +29,18 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final QComplaintNormalization normalization = QComplaintNormalization.complaintNormalization;
+    private final QUser user = QUser.user;
 
     @Override
     public List<ComplaintResponse> search(Long departmentId, ComplaintSearchCondition condition) {
 
         // Tuple로 조회 (민원 + 요약문)
         List<Tuple> results = queryFactory
-                .select(complaint, normalization.neutralSummary)
+                .select(complaint, normalization.neutralSummary,user.displayName)
                 .from(complaint)
                 // 요약 정보를 가져오기 위해 조인 (없을 수도 있으니 Left Join)
                 .leftJoin(normalization).on(normalization.complaint.eq(complaint))
+                .leftJoin(user).on(complaint.answeredBy.eq(user.id))
                 .where(
                         complaint.currentDepartmentId.eq(departmentId),
                         keywordContains(condition.getKeyword()),
@@ -54,9 +56,11 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
                 .map(tuple -> {
                     Complaint c = tuple.get(complaint);
                     String summary = tuple.get(normalization.neutralSummary);
+                    String managerName = tuple.get(user.displayName);
 
                     ComplaintResponse dto = new ComplaintResponse(c);
                     dto.setNeutralSummary(summary); // 요약문 주입
+                    dto.setManagerName(managerName);
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -144,7 +148,8 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
                         normalization,
                         incident,
                         department.name, // 부서명 (없으면 null)
-                        incidentCountSubQuery
+                        incidentCountSubQuery,
+                        user.displayName
                 )
                 .from(complaint)
                 // 정규화 정보 조인 (Left Join: 분석 안 된 민원도 보여야 함)
@@ -153,6 +158,7 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
                 .leftJoin(complaint.incident, incident)
                 // 부서 정보 조인 (Left Join)
                 .leftJoin(department).on(complaint.currentDepartmentId.eq(department.id))
+                .leftJoin(user).on(complaint.answeredBy.eq(user.id))
                 .where(complaint.id.eq(complaintId))
                 .fetchOne();
 
@@ -166,8 +172,12 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
         Incident i = result.get(incident);
         String deptName = result.get(department.name);
         Long iCount = result.get(incidentCountSubQuery);
+        String mgrName = result.get(user.displayName);
+
         if (iCount == null) iCount = 0L;
 
-        return new ComplaintDetailResponse(c, n, i, iCount, deptName);
+        ComplaintDetailResponse res = new ComplaintDetailResponse(c, n, i, iCount, deptName);
+        res.setManagerName(mgrName);
+        return res;
     }
 }

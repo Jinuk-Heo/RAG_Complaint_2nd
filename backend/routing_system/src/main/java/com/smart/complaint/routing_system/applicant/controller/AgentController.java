@@ -8,10 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +25,31 @@ import java.util.Map;
 public class AgentController {
 
     private final AuthService authService;
+
+    @Operation(summary = "내 정보 조회", description = "현재 세션 로그인된 사용자 정보를 반환합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+
+        // 개발 편의: 세션 없으면 1번 유저(admin)
+        if (session == null || session.getAttribute("LOGIN_USER") == null) {
+            Map<String, Object> mockUser = new HashMap<>();
+            mockUser.put("id", 1L); // ID 1번
+            mockUser.put("username", "admin");
+            mockUser.put("displayName", "김공무(개발용)");
+            mockUser.put("role", "AGENT");
+            return ResponseEntity.ok(mockUser);
+        }
+
+        User user = (User) session.getAttribute("LOGIN_USER");
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", user.getId());
+        response.put("username", user.getUsername());
+        response.put("displayName", user.getDisplayName());
+        response.put("role", user.getRole());
+
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * 공무원 전용 로그인 (세션 방식)

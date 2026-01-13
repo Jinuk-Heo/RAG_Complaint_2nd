@@ -8,6 +8,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -97,17 +99,41 @@ public class Complaint {
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
-    //  담당자 지정
+    @OneToMany(mappedBy = "parentComplaint", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OrderBy("createdAt ASC") // 오래된 순서대로 정렬
+    @Builder.Default
+    private List<ChildComplaint> children = new ArrayList<>();
+
+    // 담당자 지정 (Assign)
     public void assignManager(Long managerId) {
         this.answeredBy = managerId;
         this.status = ComplaintStatus.IN_PROGRESS;
     }
 
-    // 답변 등록 및 종결
-    public void completeAnswer(String answerContent) {
-        this.answer = answerContent;
+    // 답변 임시 저장 (Draft)
+    public void updateAnswerDraft(String draftAnswer) {
+        this.answer = draftAnswer;
+        // 상태는 변경하지 않음 (IN_PROGRESS 유지)
+    }
+
+    // 답변 완료 및 종결 (Complete)
+    public void completeAnswer(String finalAnswer) {
+        this.answer = finalAnswer;
         this.answeredAt = LocalDateTime.now();
-        this.status = ComplaintStatus.CLOSED; // 혹은 RESOLVED
+        this.status = ComplaintStatus.RESOLVED;
         this.closedAt = LocalDateTime.now();
+    }
+
+    // 재이관 승인 시 상태 초기화 (Reroute Approved)
+    public void rerouteTo(Long newDepartmentId) {
+        this.currentDepartmentId = newDepartmentId;
+        this.answeredBy = null; // 담당자 초기화
+        this.status = ComplaintStatus.RECEIVED; // 접수 상태로 복귀
+    }
+
+    // 담당자 배정 해제
+    public void releaseManager() {
+        this.answeredBy = null;
+        this.status = ComplaintStatus.RECEIVED;
     }
 }

@@ -26,7 +26,7 @@ public class ComplaintService {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 민원을 찾을 수 없습니다. ID=" + complaintId));
 
-        // (선택사항) 이미 다른 담당자가 있는지 체크하는 로직을 추가할 수 있습니다.
+        // 이미 다른 담당자가 있는지 체크하는 로직을 추가할 수 있습니다.
         // if (complaint.getAnsweredBy() != null && !complaint.getAnsweredBy().equals(userId)) { ... }
 
         complaint.assignManager(userId); // Entity의 편의 메서드 호출
@@ -70,5 +70,19 @@ public class ComplaintService {
                 .build();
 
         rerouteRepository.save(reroute);
+    }
+
+    /**
+     * 4. 담당 취소 (Release)
+     * - 담당자를 비우고 상태를 다시 '접수(RECEIVED)'로 되돌립니다.
+     */
+    public void releaseManager(Long complaintId, Long userId) {
+        Complaint complaint = complaintRepository.findById(complaintId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 민원을 찾을 수 없습니다."));
+
+        if (complaint.getAnsweredBy() == null || !complaint.getAnsweredBy().equals(userId)) {
+            throw new IllegalStateException("본인이 담당한 민원만 취소할 수 있습니다.");
+        }
+        complaint.releaseManager();
     }
 }

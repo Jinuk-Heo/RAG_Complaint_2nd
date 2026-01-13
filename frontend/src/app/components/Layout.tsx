@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, ChevronLeft, ChevronRight, FileText, Layers, Settings, User } from 'lucide-react';
+import { Bell, ChevronLeft, ChevronRight, FileText, Layers, Settings, User, Globe } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import {
@@ -37,6 +37,10 @@ export function Layout({ children, currentPage, onNavigate, userRole }: LayoutPr
   ];
 
   const menuItems = userRole === 'agent' ? agentMenuItems : adminMenuItems;
+
+  const handleMoveToCivilService = () => {
+    window.location.href = '/applicant/login'; 
+  };
 
   return (
     <div className="flex h-screen bg-background">
@@ -104,6 +108,14 @@ export function Layout({ children, currentPage, onNavigate, userRole }: LayoutPr
           </div>
 
           <div className="flex items-center gap-4">
+            <Button 
+              className="relative gap-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-100 px-5 py-3"
+              onClick={handleMoveToCivilService}
+            >
+              <Globe className="h-5 w-5 text-indigo-600" />
+              <span className="text-base font-bold">민원인 서비스</span>
+            </Button>      
+                        
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />

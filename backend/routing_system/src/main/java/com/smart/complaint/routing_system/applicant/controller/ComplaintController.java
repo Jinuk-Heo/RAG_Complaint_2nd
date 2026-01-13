@@ -90,6 +90,17 @@ public class ComplaintController {
         return ResponseEntity.ok("재이관 요청이 접수되었습니다. 관리자 승인 후 반영됩니다.");
     }
 
+    @Operation(summary = "담당 취소 (Release)", description = "배정받은 민원을 포기하고 다시 접수 상태로 되돌립니다.")
+    @PostMapping("/{id}/release")
+    public ResponseEntity<String> releaseManager(
+            @Parameter(description = "민원 ID") @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+        User user = getSessionUser(request);
+        complaintService.releaseManager(id, user.getId());
+        return ResponseEntity.ok("담당 배정이 취소되었습니다.");
+    }
+
     // --- [Helper Methods] ---
 
     /**
@@ -118,4 +129,5 @@ public class ComplaintController {
         }
         return (User) session.getAttribute("LOGIN_USER");
     }
+
 }

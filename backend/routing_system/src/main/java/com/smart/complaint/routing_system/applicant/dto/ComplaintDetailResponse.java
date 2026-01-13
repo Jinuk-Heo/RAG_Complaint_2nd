@@ -42,6 +42,10 @@ public class ComplaintDetailResponse {
     private IncidentStatus incidentStatus;
     private Long incidentComplaintCount;
 
+    private String managerName;
+    private Long answeredBy;
+    private String answer;
+
     // 생성자: 조회된 엔티티들을 받아서 DTO 필드를 채움
     public ComplaintDetailResponse(Complaint c, ComplaintNormalization n, Incident i, Long incidentCount, String deptName) {
         // 기본 정보 매핑
@@ -57,6 +61,9 @@ public class ComplaintDetailResponse {
         this.urgency = c.getUrgency();
         this.departmentName = deptName != null ? deptName : "미배정";
         this.category = "일반행정"; // 임시값 (부서 카테고리에 따라 로직 추가 가능)
+
+        this.answeredBy = c.getAnsweredBy();
+        this.answer = c.getAnswer();
 
         // 정규화 정보 매핑
         if (n != null) {
