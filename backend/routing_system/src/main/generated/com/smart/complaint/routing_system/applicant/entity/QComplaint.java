@@ -34,6 +34,8 @@ public class QComplaint extends EntityPathBase<Complaint> {
 
     public final StringPath body = createString("body");
 
+    public final ListPath<ChildComplaint, QChildComplaint> children = this.<ChildComplaint, QChildComplaint>createList("children", ChildComplaint.class, QChildComplaint.class, PathInits.DIRECT2);
+
     public final DateTimePath<java.time.LocalDateTime> closedAt = createDateTime("closedAt", java.time.LocalDateTime.class);
 
     public final DateTimePath<java.time.LocalDateTime> createdAt = createDateTime("createdAt", java.time.LocalDateTime.class);
