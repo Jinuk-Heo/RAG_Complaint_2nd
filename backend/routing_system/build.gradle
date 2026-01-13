@@ -49,6 +49,8 @@ dependencies {
     // 필수 어노테이션 프로세서
     annotationProcessor "jakarta.annotation:jakarta.annotation-api"
     annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+	// 자바 메일 전송 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {

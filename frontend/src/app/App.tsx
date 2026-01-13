@@ -15,10 +15,13 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import ApplicantLoginPage from './components/applicant/ApplicantLoginPage';
 import ApplicantMainPage from './components/applicant/ApplicantMainPage';
 import LoginSuccess from './components/applicant/LoginSuccess';
-import { ApplicantComplaintListPage } from './components/applicant/ApplicantComplaintListPage';
-import { ApplicantComplaintForm } from './components/applicant/ApplicantComplaintForm';
-import ApplicantLogout from './components/ApplicantLogout';
-//import ComplaintForm from './ComplaintForm';
+import ApplicantComplaintListPage from './components/applicant/ApplicantComplaintListPage';
+import ApplicantLogout from './components/applicant/ApplicantLogout';
+import ApplicantComplaintCreatePage from './components/applicant/ApplicantComplaintCreatePage';
+import ApplicantSignUpPage from './components/applicant/ApplicantSignUpPage';
+import ApplicantFindIdPage from './components/applicant/ApplicantFindIdPage';
+import ApplicantResetPwPage from './components/applicant/ApplicantResetPwPage';
+import ApplicantComplaintDetailPage from './components/applicant/ApplicantComplaintDetailPage'
 
 type Page =
   | { type: 'login' }
@@ -103,8 +106,11 @@ function AppContent() {
         <Route path="/applicant/login-success" element={<LoginSuccess />} />
         <Route path="/applicant/main" element={<ApplicantMainPage />} />
         <Route path="/applicant/complaint" element={<ApplicantComplaintListPage />} />
-        <Route path="/applicant/complaints/new" element={<ApplicantComplaintForm />} />
-        {/* <Route path="/applicant/form" element={<ComplaintForm />} /> */}
+        <Route path="/applicant/complaints/new" element={<ApplicantComplaintCreatePage />} />
+        <Route path="/applicant/signup" element={<ApplicantSignUpPage />} />
+        <Route path="/applicant/find-id" element={<ApplicantFindIdPage />} />
+        <Route path="/applicant/find-password" element={<ApplicantResetPwPage />} />
+        <Route path="/applicant/complaints/:id" element={<ApplicantComplaintDetailPage />} />
       </Routes>
     );
   }
