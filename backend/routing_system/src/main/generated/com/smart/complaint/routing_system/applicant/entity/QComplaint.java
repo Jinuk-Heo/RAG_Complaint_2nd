@@ -24,11 +24,13 @@ public class QComplaint extends EntityPathBase<Complaint> {
 
     public final StringPath addressText = createString("addressText");
 
+    public final NumberPath<Long> ai_predicted_department_id = createNumber("ai_predicted_department_id", Long.class);
+
     public final StringPath answer = createString("answer");
 
     public final NumberPath<Long> answeredBy = createNumber("answeredBy", Long.class);
 
-    public final StringPath applicantId = createString("applicantId");
+    public final NumberPath<Long> applicantId = createNumber("applicantId", Long.class);
 
     public final StringPath body = createString("body");
 
@@ -56,11 +58,11 @@ public class QComplaint extends EntityPathBase<Complaint> {
 
     public final EnumPath<com.smart.complaint.routing_system.applicant.domain.ComplaintStatus> status = createEnum("status", com.smart.complaint.routing_system.applicant.domain.ComplaintStatus.class);
 
+    public final EnumPath<com.smart.complaint.routing_system.applicant.domain.Tag> tag = createEnum("tag", com.smart.complaint.routing_system.applicant.domain.Tag.class);
+
     public final StringPath title = createString("title");
 
     public final DateTimePath<java.time.LocalDateTime> updatedAt = createDateTime("updatedAt", java.time.LocalDateTime.class);
-
-    public final EnumPath<com.smart.complaint.routing_system.applicant.domain.UrgencyLevel> urgency = createEnum("urgency", com.smart.complaint.routing_system.applicant.domain.UrgencyLevel.class);
 
     public QComplaint(String variable) {
         this(Complaint.class, forVariable(variable), INITS);

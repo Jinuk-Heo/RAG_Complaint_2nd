@@ -1,7 +1,8 @@
 package com.smart.complaint.routing_system.applicant.entity;
 
 import com.smart.complaint.routing_system.applicant.domain.ComplaintStatus;
-import com.smart.complaint.routing_system.applicant.domain.UrgencyLevel;
+
+import com.smart.complaint.routing_system.applicant.domain.Tag;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -25,16 +26,18 @@ public class Complaint {
     private Long id;
 
     @Column(name = "applicant_id")
-    private String applicantId;
-
-    @Column(name = "received_at", nullable = false) // DB는 snake_case, 자바는 camelCase
-    private LocalDateTime receivedAt;
+    private Long applicantId;
 
     @Column(length = 200, nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false) // PostgreSQL TEXT 타입 매핑
     private String body;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tag", nullable = false, columnDefinition = "tag_type")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private Tag tag;
 
     // DB 컬럼명은 그대로 두고, 자바 변수명은 올바르게 수정해서 매핑
     @Column(name = "answerd_by")
@@ -65,14 +68,11 @@ public class Complaint {
     @Builder.Default
     private ComplaintStatus status = ComplaintStatus.RECEIVED;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "urgency", nullable = false, columnDefinition = "urgency_level")
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Builder.Default
-    private UrgencyLevel urgency = UrgencyLevel.MEDIUM;
-
     @Column(name = "current_department_id")
     private Long currentDepartmentId;
+
+    @Column(name = "ai_predicted_department_id")
+    private Long ai_predicted_department_id;
 
     @Column(name = "incident_id")
     private Long incidentId;
@@ -82,6 +82,9 @@ public class Complaint {
 
     @Column(name = "incident_link_score", precision = 6, scale = 4)
     private BigDecimal incidentLinkScore;
+
+    @Column(name = "received_at", nullable = false) // DB는 snake_case, 자바는 camelCase
+    private LocalDateTime receivedAt;
 
     @CreationTimestamp
     @Column(name = "created_at")

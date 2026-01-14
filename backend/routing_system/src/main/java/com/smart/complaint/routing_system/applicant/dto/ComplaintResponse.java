@@ -29,7 +29,6 @@ public class ComplaintResponse {
         this.address = complaint.getAddressText();
         this.receivedAt = complaint.getReceivedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         this.status = complaint.getStatus();
-        this.urgency = complaint.getUrgency();
 
         if (complaint.getIncidentId() != null) {
             this.incidentId = String.format("I-2026-%04d", complaint.getIncidentId());

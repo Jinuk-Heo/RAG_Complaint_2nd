@@ -8,6 +8,7 @@ import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.smart.complaint.routing_system.applicant.domain.ComplaintStatus;
 import com.smart.complaint.routing_system.applicant.domain.UrgencyLevel;
+import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailDto;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDto;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintResponse;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintSearchCondition;
@@ -40,7 +41,6 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
                         // 2. 검색 필터들
                         keywordContains(condition.getKeyword()),
                         statusEq(condition.getStatus()),
-                        urgencyEq(condition.getUrgency()),
                         hasIncident(condition.getHasIncident()))
                 .orderBy(getOrderSpecifier(condition.getSort())) // 정렬 적용
                 .fetch();
@@ -75,7 +75,7 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
     }
 
     @Override
-    public List<ComplaintDto> findTop3RecentComplaintByApplicantId(String applicantId) {
+    public List<ComplaintDto> findTop3RecentComplaintByApplicantId(Long applicantId) {
         QComplaint complaint = QComplaint.complaint;
 
         return queryFactory
@@ -93,16 +93,19 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
     }
 
     @Override
-    public List<ComplaintDto> findAllByApplicantId(String applicantId, String keyword) {
+    public List<ComplaintDetailDto> findAllByApplicantId(Long applicantId, String keyword) {
         QComplaint complaint = QComplaint.complaint;
 
         return queryFactory
-                .select(Projections.constructor(ComplaintDto.class,
+                .select(Projections.constructor(ComplaintDetailDto.class,
                         complaint.id,
                         complaint.title,
                         complaint.body,
+                        complaint.answer,
+                        complaint.addressText,
                         complaint.status,
-                        complaint.createdAt
+                        complaint.createdAt,
+                        complaint.updatedAt
                 // record의 생성자 파라미터 순서와 데이터 타입이 정확이 일치해야함
                 ))
                 .from(complaint)
@@ -125,10 +128,6 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
         return status != null ? complaint.status.eq(status) : null;
     }
 
-    private BooleanExpression urgencyEq(UrgencyLevel urgency) {
-        return urgency != null ? complaint.urgency.eq(urgency) : null;
-    }
-
     private BooleanExpression hasIncident(Boolean hasIncident) {
         if (hasIncident == null)
             return null;
@@ -142,13 +141,7 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
 
     // --- 정렬 메서드 (Sort) ---
     private OrderSpecifier<?> getOrderSpecifier(String sort) {
-        if ("urgency".equals(sort)) {
-            // 긴급도: HIGH(2) -> MEDIUM(1) -> LOW(0) 순서라고 가정 (Enum 정의 순서에 따라 다름)
-            // 보통 Enum을 HIGH, MEDIUM, LOW 순으로 정의했으면 ordinal() 기준 asc()가 맞을 수 있음
-            // 여기서는 안전하게 문자열 기준 desc로 잡거나, Enum 순서 확인 필요.
-            // 일단 urgency 필드 자체 정렬
-            return complaint.urgency.desc();
-        } else if ("status".equals(sort)) {
+        if ("status".equals(sort)) {
             return complaint.status.asc();
         }
         // 기본값: 최신순

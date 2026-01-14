@@ -136,58 +136,93 @@ const ApplicantMainPage = () => {
         onLogout={handleLogout}
       />
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="space-y-8">
-          {/* Recent Complaints */}
-          {isLoading ? (
-            <div className="flex justify-center py-10">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            </div>
-          ) : Array.isArray(recentComplaints) && recentComplaints.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {recentComplaints.map((complaint) => (
-                <div
-                  key={complaint.id}
-                  className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/applicant/complaints/${complaint.id}`)}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${complaint.complaintStatus === 'ANSWERED' ? 'bg-green-100 text-green-700' :
-                        complaint.complaintStatus === 'ASSIGNED' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
-                      }`}>
-                      {complaint.complaintStatus}
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {new Date(complaint.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h4 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1">
-                    {complaint.title}
-                  </h4>
-                  <p className="text-sm text-gray-500 line-clamp-2">
-                    클릭하여 자세한 내용을 확인하세요.
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            /* 민원이 없을 때의 Empty State (기존 유지) */
-            <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl py-12 flex flex-col items-center justify-center">
-              <span className="text-4xl mb-4">📄</span>
-              <h3 className="text-xl font-bold text-gray-700 mb-2">최근 신청한 민원이 없습니다</h3>
-              <button onClick={handleNewComplaint} className="mt-4 text-blue-600 font-semibold">+ 새 민원 작성하기</button>
-            </div>
-          )}
+      <main className="max-w-7xl mx-auto px-6 py-12">
 
-          {/* Stats and Keywords Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <ResponseTimeStats
-              data={mockResponseTimeData}
-              overallStats={mockOverallStats}
-            />
-            <KeywordCloud keywords={mockKeywords} />
+        {/* Recent Complaints Section */}
+        <section className="bg-white rounded-[32px] border-gray-100 overflow-hidden p-2">
+          <div className="p-8 md:p-10 space-y-10">
+            {/* Section Header */}
+            <div className="border-b border-gray-50 flex justify-between items-center bg-white">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <span className="text-xl">📋</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">최근 민원 현황</h3>
+                  <p className="text-xs text-gray-400">최근에 접수된 3건의 민원 내역입니다.</p>
+                </div>
+              </div>
+              <span className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">
+                TOP 3
+              </span>
+            </div>
+
+            <div className="space-y-8">
+              {/* Recent Complaints */}
+              {isLoading ? (
+                <div className="flex justify-center py-10">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                </div>
+              ) : Array.isArray(recentComplaints) && recentComplaints.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {recentComplaints.map((complaint) => (
+                    <div
+                      key={complaint.id}
+                      className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/applicant/complaints/${complaint.id}`)}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${complaint.complaintStatus === 'ANSWERED' ? 'bg-green-100 text-green-700' :
+                          complaint.complaintStatus === 'ASSIGNED' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
+                          }`}>
+                          {complaint.complaintStatus}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(complaint.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-800 mb-2 line-clamp-1">
+                        {complaint.title}
+                      </h4>
+                      <p className="text-sm text-gray-500 line-clamp-2">
+                        클릭하여 자세한 내용을 확인하세요.
+                      </p>
+                    </div>
+                  ))}
+
+                  {Array.isArray(recentComplaints) && recentComplaints.length < 3 && (
+                    [...Array(3 - recentComplaints.length)].map((_, index) => (
+                      <div
+                        key={`empty-${index}`}
+                        onClick={handleNewComplaint}
+                        className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 hover:border-blue-300 transition-all group"
+                      >
+                        <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">➕</span>
+                        <p className="text-sm font-semibold text-gray-500 group-hover:text-blue-600">새 민원 작성하기</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                /* 민원이 없을 때의 Empty State (기존 유지) */
+                <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl py-12 flex flex-col items-center justify-center">
+                  <span className="text-4xl mb-4">📄</span>
+                  <h3 className="text-xl font-bold text-gray-700 mb-2">최근 신청한 민원이 없습니다</h3>
+                  <button onClick={handleNewComplaint} className="mt-4 text-blue-600 font-semibold">+ 새 민원 작성하기</button>
+                </div>
+              )}
+
+              {/* Stats and Keywords Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 bg-white rounded-2xl border-gray-100 transition-shadow">
+                <ResponseTimeStats
+                  data={mockResponseTimeData}
+                  overallStats={mockOverallStats}
+                />
+                <KeywordCloud keywords={mockKeywords} />
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );

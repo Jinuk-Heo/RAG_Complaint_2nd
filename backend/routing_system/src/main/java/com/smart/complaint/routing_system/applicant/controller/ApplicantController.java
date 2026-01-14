@@ -1,6 +1,8 @@
 package com.smart.complaint.routing_system.applicant.controller;
 
+import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailDto;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDto;
+import com.smart.complaint.routing_system.applicant.dto.UserCheckDto;
 import com.smart.complaint.routing_system.applicant.dto.UserLoginRequest;
 import com.smart.complaint.routing_system.applicant.dto.UserSignUpDto;
 import com.smart.complaint.routing_system.applicant.dto.UserEmailDto;
@@ -52,11 +54,11 @@ public class ApplicantController {
         return ResponseEntity.ok(Map.of("accessToken", token));
     }
 
-    @Operation(summary = "사용자 아이디 중복 확인", description = "중복 확인 버튼 클릭 시 동작, 중복이 있을 경우 알림")
+    @Operation(summary = "사용자 아이디, 이메일 중복 확인", description = "중복 확인 버튼 클릭 시 동작, 중복이 있을 경우 알림")
     @PostMapping("api/applicant/check-id")
-    public ResponseEntity<Boolean> checkUserIdAvailability(@RequestBody UserLoginRequest loginRequest) {
+    public ResponseEntity<Boolean> checkUserIdAvailability(@RequestBody UserCheckDto checkDto) {
 
-        boolean isAvailable = applicantService.isUserIdAvailable(loginRequest.userId());
+        boolean isAvailable = applicantService.isUserIdEmailAvailable(checkDto.userId(), checkDto.email());
 
         return ResponseEntity.ok(isAvailable);
     }
@@ -92,7 +94,7 @@ public class ApplicantController {
 
     @Operation(summary = "가장 최근 작성한 민원 3개 조회", description = "JWT에서 사용자의 아이디를 확인하고 이를 통해 민원 조회")
     @GetMapping("/api/applicant/complaints/top3")
-    public ResponseEntity<List<ComplaintDto>> getTop3RecentComplaints(@AuthenticationPrincipal String applicantId) {
+    public ResponseEntity<List<ComplaintDto>> getTop3RecentComplaints(@AuthenticationPrincipal Long applicantId) {
 
         System.out.println("현재 로그인한 사용자:" + applicantId);
         
@@ -103,21 +105,23 @@ public class ApplicantController {
     }
 
     @Operation(summary = "민원 상세 조회", description = "민원 ID를 통해 특정 민원의 상세 내역과 답변을 조회")
-    @GetMapping("/api/applicant/complaints/${id}")
-    public ResponseEntity<ComplaintDto> getMethodName(@PathVariable Long id) {
+    @GetMapping("/api/applicant/complaints/{id}")
+    public ResponseEntity<ComplaintDetailDto> getMethodName(@PathVariable Long id) {
         
-        return new ResponseEntity<>(null);
+        ComplaintDetailDto complaintDetailDto = applicantService.getComplaintDetails(id);
+
+        return ResponseEntity.ok(complaintDetailDto);
     }
     
     // TODO: 기능 추가할 것
     @Operation(summary = "모든 민원 조회", description = "JWT를 통해 전체 민원을 조회")
     @GetMapping("/api/applicant/complaints")
-    public ResponseEntity<List<ComplaintDto>> getAllComplaints(@AuthenticationPrincipal String applicantId,
+    public ResponseEntity<List<ComplaintDetailDto>> getAllComplaints(@AuthenticationPrincipal Long applicantId,
             String keyword) {
 
         System.out.println("현재 로그인한 사용자:" + applicantId);
         // 현재 로그인한 사용자의 모든 민원 조회
-        List<ComplaintDto> complaints = applicantService.getAllComplaints(applicantId, keyword);
+        List<ComplaintDetailDto> complaints = applicantService.getAllComplaints(applicantId, keyword);
 
         return ResponseEntity.ok(complaints);
     }

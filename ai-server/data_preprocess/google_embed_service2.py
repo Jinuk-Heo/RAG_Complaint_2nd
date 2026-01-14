@@ -65,10 +65,10 @@ def migrate_data():
             # 1. 부모 테이블 삽입
             sql_parent = """
             INSERT INTO complaints (
-                received_at, title, body, answer, address_text, status, urgency, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, 'RECEIVED', 'MEDIUM', %s, %s) RETURNING id;
+                received_at, title, body, answer, district_id, status, address_text, created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, 2, 'RECEIVED', %s, %s, %s) RETURNING id;
             """
-            cur.execute(sql_parent, (now, row['req_title'], row['req_content'], row['resp_content'], row["resp_dept"], row["req_date"], row["resp_date"]))
+            cur.execute(sql_parent, (now, row['req_title'], row['req_content'], row['resp_content'], row['resp_dept'] , row["req_date"], row["resp_date"]))
             new_complaint_id = cur.fetchone()[0]
 
             # 2. 임베딩 생성 (search_text 컬럼 활용)
@@ -82,8 +82,8 @@ def migrate_data():
             sql_child = """
             INSERT INTO complaint_normalizations (
                 complaint_id, neutral_summary, core_request, 
-                target_object, keywords_jsonb, embedding, resp_dept, is_current
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                target_object, keywords_jsonb, embedding, resp_dept
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             
             keywords_list = [k.strip() for k in str(row['keywords']).split(',')] if pd.notna(row['keywords']) else []
@@ -96,7 +96,6 @@ def migrate_data():
                 Json(keywords_list),
                 vector,
                 row['resp_dept'],
-                True
             ))
 
             # 4. 개별 건별 커밋 (안정성 최우선)

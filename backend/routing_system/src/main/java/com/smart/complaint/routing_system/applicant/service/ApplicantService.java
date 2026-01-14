@@ -4,6 +4,7 @@ import java.security.SecureRandom;
 import java.util.List;
 
 import com.smart.complaint.routing_system.applicant.repository.ComplaintRepository;
+import com.smart.complaint.routing_system.applicant.repository.ComplaintRepositoryImpl;
 import com.smart.complaint.routing_system.applicant.repository.UserRepository;
 import com.smart.complaint.routing_system.applicant.service.jwt.JwtTokenProvider;
 
@@ -16,9 +17,11 @@ import org.springframework.stereotype.Service;
 
 import com.smart.complaint.routing_system.applicant.config.BusinessException;
 import com.smart.complaint.routing_system.applicant.domain.UserRole;
+import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailDto;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDto;
 import com.smart.complaint.routing_system.applicant.dto.UserLoginRequest;
 import com.smart.complaint.routing_system.applicant.dto.UserSignUpDto;
+import com.smart.complaint.routing_system.applicant.entity.Complaint;
 import com.smart.complaint.routing_system.applicant.entity.User;
 import com.smart.complaint.routing_system.applicant.domain.ErrorMessage;
 
@@ -73,9 +76,9 @@ public class ApplicantService {
         return jwtTokenProvider.createJwtToken(String.valueOf(user.getId()), user.getEmail());
     }
 
-    public boolean isUserIdAvailable(String userId) {
+    public boolean isUserIdEmailAvailable(String userId, String email) {
 
-        if (userRepository.existsByUsername(userId)) {
+        if (userRepository.existsByUsername(userId) || userRepository.existsByEmail(email)) {
             // 중복된 경우 커스텀 예외 발생
             throw new BusinessException(ErrorMessage.USER_DUPLICATE);
         }
@@ -136,12 +139,24 @@ public class ApplicantService {
         return true;
     }
 
-    public List<ComplaintDto> getTop3RecentComplaints(String applicantId) {
+    public List<ComplaintDto> getTop3RecentComplaints(Long applicantId) {
 
         return complaintRepository.findTop3RecentComplaintByApplicantId(applicantId);
     }
 
-    public List<ComplaintDto> getAllComplaints(String applicantId, String keyword) {
+    public ComplaintDetailDto getComplaintDetails(Long complaintId) {
+
+        log.info("사용자: "+complaintId);
+        ComplaintDetailDto foundComplaint = complaintRepository.findById(complaintId)
+            .map(ComplaintDetailDto::from)
+            .orElseThrow(() -> new BusinessException(ErrorMessage.COMPLAINT_NOT_FOUND));
+
+        return foundComplaint;
+    }
+
+
+    public List<ComplaintDetailDto> getAllComplaints(Long applicantId, String keyword) {
+
 
         return complaintRepository.findAllByApplicantId(applicantId, null);
     }
