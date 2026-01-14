@@ -15,14 +15,13 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import ApplicantLoginPage from './components/applicant/ApplicantLoginPage';
 import ApplicantMainPage from './components/applicant/ApplicantMainPage';
 import LoginSuccess from './components/applicant/LoginSuccess';
-import ApplicantComplaintListPage from './components/applicant/ApplicantComplaintListPage';
 import ApplicantLogout from './components/applicant/ApplicantLogout';
 import ApplicantComplaintCreatePage from './components/applicant/ApplicantComplaintCreatePage';
 import ApplicantSignUpPage from './components/applicant/ApplicantSignUpPage';
 import ApplicantFindIdPage from './components/applicant/ApplicantFindIdPage';
 import ApplicantResetPwPage from './components/applicant/ApplicantResetPwPage';
-import ApplicantComplaintDetailPage from './components/applicant/ApplicantComplaintDetailPage';
-import ApplicantComplaintsPage from './components/applicant/ApplicantComplaintsPage';
+import ComplaintDetail from './components/applicant/ComplaintDetail';
+import PastComplaintsPage from './components/applicant/ComplaintListPage';
 
 type Page =
   | { type: 'login' }
@@ -106,13 +105,12 @@ function AppContent() {
         <Route path="/applicant/logout" element={<ApplicantLogout />} />
         <Route path="/applicant/login-success" element={<LoginSuccess />} />
         <Route path="/applicant/main" element={<ApplicantMainPage />} />
-        <Route path="/applicant/complaint" element={<ApplicantComplaintListPage />} />
         <Route path="/applicant/complaints/new" element={<ApplicantComplaintCreatePage />} />
         <Route path="/applicant/signup" element={<ApplicantSignUpPage />} />
         <Route path="/applicant/find-id" element={<ApplicantFindIdPage />} />
         <Route path="/applicant/find-password" element={<ApplicantResetPwPage />} />
-        <Route path="/applicant/complaints/:id" element={<ApplicantComplaintDetailPage />} />
-        {/*<Route path="/applicant/complaints" element={<ApplicantComplaintsPage />} /> */}
+        <Route path="/applicant/complaints/:id" element={<ComplaintDetail />} />
+        <Route path="/applicant/complaints" element={<PastComplaintsPage />} />
       </Routes>
     );
   }

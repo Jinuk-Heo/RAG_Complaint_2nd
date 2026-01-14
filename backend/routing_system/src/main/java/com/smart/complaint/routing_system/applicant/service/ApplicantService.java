@@ -19,6 +19,7 @@ import com.smart.complaint.routing_system.applicant.config.BusinessException;
 import com.smart.complaint.routing_system.applicant.domain.UserRole;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailDto;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDto;
+import com.smart.complaint.routing_system.applicant.dto.ComplaintHeatMap;
 import com.smart.complaint.routing_system.applicant.dto.UserLoginRequest;
 import com.smart.complaint.routing_system.applicant.dto.UserSignUpDto;
 import com.smart.complaint.routing_system.applicant.entity.Complaint;
@@ -162,8 +163,16 @@ public class ApplicantService {
         return foundComplaint;
     }
 
-    public List<ComplaintDetailDto> getAllComplaints(Long applicantId, String keyword) {
+    public List<ComplaintDetailDto> getAllComplaints(String applicantId, String keyword) {
 
-        return complaintRepository.findAllByApplicantId(applicantId, null);
+        Long id = Long.parseLong(applicantId);
+
+        return complaintRepository.findAllByApplicantId(id, keyword);
+    }
+
+    public List<ComplaintHeatMap> getAllComplaintsWithLatLon(String applicantId) {
+        Long id = Long.parseLong(applicantId);
+
+        return complaintRepository.getAllComplaintsWithLatLon(id);
     }
 }

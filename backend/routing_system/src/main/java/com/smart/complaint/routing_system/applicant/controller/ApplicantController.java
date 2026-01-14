@@ -2,11 +2,14 @@ package com.smart.complaint.routing_system.applicant.controller;
 
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailDto;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDto;
+import com.smart.complaint.routing_system.applicant.dto.ComplaintHeatMap;
+import com.smart.complaint.routing_system.applicant.dto.ComplaintSubmitDto;
 import com.smart.complaint.routing_system.applicant.dto.UserCheckDto;
 import com.smart.complaint.routing_system.applicant.dto.UserLoginRequest;
 import com.smart.complaint.routing_system.applicant.dto.UserSignUpDto;
 import com.smart.complaint.routing_system.applicant.dto.UserEmailDto;
 import com.smart.complaint.routing_system.applicant.service.ApplicantService;
+import com.smart.complaint.routing_system.applicant.service.ComplaintService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
-
+import org.springframework.web.bind.annotation.RequestParam;
 
 // 민원인 컨트롤러
 @Tag(name = "민원인 컨트롤러", description = "민원인용 민원 관리 API")
@@ -32,11 +35,12 @@ import java.util.Map;
 public class ApplicantController {
 
     private final ApplicantService applicantService;
+    private final ComplaintService complaintService;
 
     @Operation(summary = "회원 가입 엔드포인트", description = "아이디, 비밀번호, 이메일, 이름을 받아 회원가입")
     @PostMapping("api/applicant/signup")
-    public ResponseEntity<String> applicantSignUp(@RequestBody UserSignUpDto signUpDto, 
-        @RequestHeader(value = "CROSS-KEY", required = true) String key) {
+    public ResponseEntity<String> applicantSignUp(@RequestBody UserSignUpDto signUpDto,
+            @RequestHeader(value = "CROSS-KEY", required = true) String key) {
 
         String result = applicantService.applicantSignUp(signUpDto, key);
 
@@ -75,12 +79,12 @@ public class ApplicantController {
     @Operation(summary = "새 임시 비밀번호 발급", description = "이메일을 통해 임시 랜덤 비밀번호 발급")
     @PostMapping("/api/applicant/newpw")
     public ResponseEntity<Map<String, String>> postMethodName(@RequestBody UserEmailDto emailDto) {
-        
+
         applicantService.updatePassword(emailDto.email());
-        
+
         return ResponseEntity.ok(null);
     }
-    
+
     @Operation(summary = "토큰 유효성 검사 엔드포인트", description = "사용자의 토큰이 유효한지 확인한다.")
     @GetMapping("/api/auth/validate")
     public ResponseEntity<?> validateToken(@AuthenticationPrincipal String providerId) {
@@ -97,7 +101,7 @@ public class ApplicantController {
     public ResponseEntity<List<ComplaintDto>> getTop3RecentComplaints(@AuthenticationPrincipal String applicantId) {
 
         System.out.println("현재 로그인한 사용자:" + applicantId);
-        
+
         // 현재 로그인한 사용자의 최근 3개 민원 조회
         Long id = Long.parseLong(applicantId);
         List<ComplaintDto> complaints = applicantService.getTop3RecentComplaints(id);
@@ -108,16 +112,15 @@ public class ApplicantController {
     @Operation(summary = "민원 상세 조회", description = "민원 ID를 통해 특정 민원의 상세 내역과 답변을 조회")
     @GetMapping("/api/applicant/complaints/{id}")
     public ResponseEntity<ComplaintDetailDto> getMethodName(@PathVariable Long id) {
-        
+
         ComplaintDetailDto complaintDetailDto = applicantService.getComplaintDetails(id);
 
         return ResponseEntity.ok(complaintDetailDto);
     }
-    
-    // TODO: 기능 추가할 것
+
     @Operation(summary = "모든 민원 조회", description = "JWT를 통해 전체 민원을 조회")
     @GetMapping("/api/applicant/complaints")
-    public ResponseEntity<List<ComplaintDetailDto>> getAllComplaints(@AuthenticationPrincipal Long applicantId,
+    public ResponseEntity<List<ComplaintDetailDto>> getAllComplaints(@AuthenticationPrincipal String applicantId,
             String keyword) {
 
         System.out.println("현재 로그인한 사용자:" + applicantId);
@@ -127,26 +130,50 @@ public class ApplicantController {
         return ResponseEntity.ok(complaints);
     }
 
+    @Operation(summary = "모든 민원 조회(lat + lon)", description = "JWT를 통해 전체 민원과 위치정보 조회")
+    @GetMapping("/api/applicant/heatmap")
+    public ResponseEntity<List<ComplaintHeatMap>> getAllComplaintsWithLatLon(
+            @AuthenticationPrincipal String applicantId,
+            String keyword) {
 
+        System.out.println("현재 로그인한 사용자:" + applicantId);
+        // 현재 로그인한 사용자의 모든 민원 조회
+        List<ComplaintHeatMap> complaints = applicantService.getAllComplaintsWithLatLon(applicantId);
 
+        return ResponseEntity.ok(complaints);
+    }
+
+    @PostMapping("/api/applicant/complaint")
+    public ResponseEntity<String> submitComplaint(@AuthenticationPrincipal String applicantId,
+            @RequestBody ComplaintSubmitDto complaintSubmitDto) {
+
+        Long id = complaintService.receiveComplaint(applicantId, complaintSubmitDto);
+        complaintService.analyzeComplaint(id, complaintSubmitDto);
+
+        return ResponseEntity.ok("전송이 완료되었습니다.");
+    }
 
     /*
-    @PostMapping("/api/applicant/complaints")
-    public ResponseEntity<NormalizationResponse> sendComplaints(@AuthenticationPrincipal String applicantId,
-            @RequestBody ComplaintDto request) {
-
-        NormalizationResponse aiData = aiService.getNormalization(request);
-
-        // 2. 서비스 호출 (분석 데이터 전달)
-        // aiData 안에 들어있는 embedding(double[])을 서비스로 넘깁니다.
-        List<ComplaintSearchResult> similarComplaints = aiService.getSimilarityScore(aiData.embedding());
-
-        // 3. 결과 확인 (콘솔 출력 및 반환)
-        similarComplaints.forEach(result -> {
-            System.out.println("유사 민원 발견 - [" + result.simScore() + "] " + result.title());
-        });
-
-        return ResponseEntity.ok(null);
-    }
-    */
+     * @PostMapping("/api/applicant/complaints")
+     * public ResponseEntity<NormalizationResponse>
+     * sendComplaints(@AuthenticationPrincipal String applicantId,
+     * 
+     * @RequestBody ComplaintDto request) {
+     * 
+     * NormalizationResponse aiData = aiService.getNormalization(request);
+     * 
+     * // 2. 서비스 호출 (분석 데이터 전달)
+     * // aiData 안에 들어있는 embedding(double[])을 서비스로 넘깁니다.
+     * List<ComplaintSearchResult> similarComplaints =
+     * aiService.getSimilarityScore(aiData.embedding());
+     * 
+     * // 3. 결과 확인 (콘솔 출력 및 반환)
+     * similarComplaints.forEach(result -> {
+     * System.out.println("유사 민원 발견 - [" + result.simScore() + "] " +
+     * result.title());
+     * });
+     * 
+     * return ResponseEntity.ok(null);
+     * }
+     */
 }

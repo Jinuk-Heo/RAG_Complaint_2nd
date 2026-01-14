@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, TrendingUp, Clock, MapPin, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -26,6 +26,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from './ui/sheet';
+import KakaoMap from './applicant/KakaoMap';
 
 const complaintTrendData = [
   { date: '12/26', count: 45 },
@@ -78,6 +79,25 @@ export function AdminDashboard() {
   const [mapView, setMapView] = useState<'heatmap' | 'marker'>('heatmap');
   const [showSurgeOnly, setShowSurgeOnly] = useState(false);
   const [selectedHotspot, setSelectedHotspot] = useState<any>(null);
+  const [complaints, setComplaints] = useState<any[]>([]); // DB 데이터 저장
+
+  const token = localStorage.getItem('accessToken');
+  useEffect(() => {
+    fetch('http://localhost:8080/api/applicant/heatmap', {
+      headers: {
+        'Authorization': `Bearer ${token}`, // 토큰 추가
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(res => {
+        if (res.status === 302 || res.status === 401) {
+          throw new Error("인증 실패 또는 리다이렉트 발생");
+        }
+        return res.json();
+      })
+      .then(data => setComplaints(data))
+      .catch(err => console.error("데이터 로드 에러:", err));
+  }, []);
 
   return (
     <div className="h-full flex flex-col">
@@ -179,7 +199,7 @@ export function AdminDashboard() {
           </Card>
 
 
-                    {/* Widget 4: 처리시간 분포 */}
+          {/* Widget 4: 처리시간 분포 */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -335,59 +355,13 @@ export function AdminDashboard() {
               {/* Mock Map */}
               <div className="relative h-64 bg-slate-100 rounded border overflow-hidden">
                 {/* Map placeholder */}
-                <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
-                  <MapPin className="h-5 w-5 mr-2" />
-                  강남구 지도
-                </div>
-
+                <KakaoMap
+                  complaints={complaints}
+                  mapView={mapView}
+                  showSurgeOnly={showSurgeOnly}
+                />
                 {/* Hotspot markers/heatmap */}
-                {mapView === 'marker' ? (
-                  // Marker mode
-                  <>
-                    {hotspotData.map((spot) => (
-                      <div
-                        key={spot.id}
-                        className="absolute cursor-pointer"
-                        style={{ left: `${spot.x}%`, top: `${spot.y}%`, transform: 'translate(-50%, -50%)' }}
-                        onClick={() => setSelectedHotspot(spot)}
-                      >
-                        <div
-                          className={`h-6 w-6 rounded-full flex items-center justify-center shadow-lg ${
-                            spot.intensity === 'high'
-                              ? 'bg-red-500'
-                              : spot.intensity === 'medium'
-                              ? 'bg-orange-500'
-                              : 'bg-yellow-500'
-                          }`}
-                        >
-                          <span className="text-xs text-white">{spot.complaints}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  // Heatmap mode
-                  <>
-                    {hotspotData.map((spot) => (
-                      <div
-                        key={spot.id}
-                        className="absolute cursor-pointer"
-                        style={{ left: `${spot.x}%`, top: `${spot.y}%`, transform: 'translate(-50%, -50%)' }}
-                        onClick={() => setSelectedHotspot(spot)}
-                      >
-                        <div
-                          className={`h-16 w-16 rounded-full blur-md ${
-                            spot.intensity === 'high'
-                              ? 'bg-red-400/60'
-                              : spot.intensity === 'medium'
-                              ? 'bg-orange-400/40'
-                              : 'bg-yellow-400/30'
-                          }`}
-                        />
-                      </div>
-                    ))}
-                  </>
-                )}
+
               </div>
 
               {/* Legend */}

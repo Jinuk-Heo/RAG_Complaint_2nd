@@ -10,12 +10,14 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { cn } from './ui/utils';
 import KakaoMap from './KakaoMap';
+import Swal from 'sweetalert2';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface NewComplaintFormProps {
   onGoHome: () => void;
   onViewComplaints: () => void;
   onPreview: (data: ComplaintFormData) => void;
-  onSubmit: (data: ComplaintFormData) => void;
 }
 
 export interface ComplaintFormData {
@@ -25,11 +27,73 @@ export interface ComplaintFormData {
   incidentDate: Date;
 }
 
-export function ApplicantComplaintForm({ onGoHome, onViewComplaints, onPreview, onSubmit }: NewComplaintFormProps) {
+export function ApplicantComplaintForm({ onGoHome, onViewComplaints, onPreview }: NewComplaintFormProps) {
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem('accessToken');
+
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [location, setLocation] = useState('서울시 강남구 역삼동 123-45');
+  const [location, setLocation] = useState('서울특별시 강동구 성내로 25');
   const [incidentDate, setIncidentDate] = useState<Date>(new Date());
+  // 위치 정보를 저장하기 위한 상태
+  const [geoData, setGeoData] = useState({ lat: 0, lon: 0, roadAddress: '' });
+
+  // 지도의 위치가 바뀔 때 실행될 함수
+  const handleLocationChange = (lat: number, lon: number, roadAddress: string) => {
+    // 1. 위도, 경도, 도로명 주소를 객체에 저장 (전송용)
+    setGeoData({ lat, lon, roadAddress });
+
+    // 2. 상단 Input 창에 표시되는 주소 텍스트를 마커 위치의 주소로 자동 업데이트!
+    setLocation(roadAddress);
+  };
+
+  const handleSubmit = async () => {
+    // 백엔드로 보낼 데이터 (DTO 구조)
+    const submitData = {
+      title,
+      body,
+      addressText: geoData.roadAddress || location,
+      lat: geoData.lat,
+      lon: geoData.lon,
+    };
+
+    Swal.fire({
+      title: '민원을 제출하시겠습니까?',
+      html: `<b>확인된 위치:</b><br/>${submitData.addressText}`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '제출하기',
+      cancelButtonText: '취소',
+      confirmButtonColor: '#1677d3',
+      cancelButtonColor: 'rgb(230, 190, 61)',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          // 데이터 전송
+          await axios.post('http://localhost:8080/api/applicant/complaint', submitData, {
+            headers: {
+              'Authorization': `Bearer ${token}`, // 반드시 Bearer 한 칸 띄우고 토큰 입력
+              'Content-Type': 'application/json'
+            }
+          });
+
+          // 전송 완료 알림
+          Swal.fire({
+            title: '전송 완료!',
+            text: '민원이 정상적으로 접수되었습니다.',
+            icon: 'success',
+            confirmButtonText: '확인'
+          }).then(() => {
+            navigate('/applicant/main');
+          });
+
+        } catch (error) {
+          Swal.fire('오류 발생', '민원 전송 중 에러가 발생했습니다.', 'error');
+        }
+      }
+    });
+  };
 
   const handlePreview = () => {
     const formData: ComplaintFormData = {
@@ -39,16 +103,6 @@ export function ApplicantComplaintForm({ onGoHome, onViewComplaints, onPreview, 
       incidentDate,
     };
     onPreview(formData);
-  };
-
-  const handleSubmit = () => {
-    const formData: ComplaintFormData = {
-      title,
-      body,
-      location,
-      incidentDate,
-    };
-    onSubmit(formData);
   };
 
   return (
@@ -68,7 +122,7 @@ export function ApplicantComplaintForm({ onGoHome, onViewComplaints, onPreview, 
             </Button>
             <Button
               variant="outline"
-              onClick={onViewComplaints}
+              onClick={() => navigate('/applicant/complaints')}
               className="flex items-center gap-2"
             >
               <FileText className="w-4 h-4" />
@@ -83,26 +137,41 @@ export function ApplicantComplaintForm({ onGoHome, onViewComplaints, onPreview, 
         <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
           {/* Title Input */}
           <div className="space-y-2">
-            <Label htmlFor="title">민원 제목 *</Label>
+            <div className="flex justify-between items-end">
+              <Label htmlFor="title" className="font-semibold text-gray-700">민원 제목 *</Label>
+              <span className={cn(
+                "text-xs",
+                title.length >= 200 ? "text-red-500 font-bold" : "text-gray-400"
+              )}>
+                {title.length} / 200
+              </span>
+            </div>
             <Input
               id="title"
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="예: 아파트 주변 가로등 고장" // TODO: Change placeholder text
-              className="w-full"
+              onChange={(e) => setTitle(e.target.value.slice(0, 200))}
+              placeholder="예: 아파트 주변 가로등 고장"
+              className="w-full border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all shadow-sm"
             />
           </div>
-
           {/* Body Textarea */}
           <div className="space-y-2">
-            <Label htmlFor="body">민원 내용 *</Label>
+            <div className="flex justify-between items-end">
+              <Label htmlFor="body" className="font-semibold text-gray-700">민원 내용 *</Label>
+              <span className={cn(
+                "text-xs",
+                body.length >= 40000 ? "text-red-500 font-bold" : "text-gray-400"
+              )}>
+                {body.length.toLocaleString()} / 40,000
+              </span>
+            </div>
             <Textarea
               id="body"
               value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="민원 내용을 상세히 작성해주세요. 예: 서초구 반포동 123-45번지 아파트 정문 앞 가로등이 2주째 작동하지 않아 야간에 보행자 안전에 위험이 있습니다. 조속한 수리를 요청드립니다." // TODO: Change placeholder text
-              className="w-full min-h-[200px] resize-y"
+              onChange={(e) => setBody(e.target.value.slice(0, 40000))}
+              placeholder="민원 내용을 상세히 작성해주세요."
+              className="w-full min-h-[300px] resize-y border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all p-4 shadow-sm"
             />
           </div>
 
@@ -121,16 +190,12 @@ export function ApplicantComplaintForm({ onGoHome, onViewComplaints, onPreview, 
                   placeholder="주소를 입력하세요"
                 />
               </div>
-              
+
               {/* Map API Integration Space */}
-              <div className="w-full h-64 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500 text-sm">지도 API 연동 영역</p>
-                  <p className="text-gray-400 text-xs mt-1">
-                    <KakaoMap address={location} />
-                  </p>
-                </div>
+              <div className="w-full h-64 bg-gray-100 rounded-lg border border-gray-300 overflow-hidden relative">
+                {/* 주소가 있을 때만 지도를 보여주거나, 기본 지도를 보여줍니다 */}
+                <KakaoMap address={location}
+                  onLocationChange={handleLocationChange} />
               </div>
             </div>
           </div>
@@ -192,3 +257,4 @@ export function ApplicantComplaintForm({ onGoHome, onViewComplaints, onPreview, 
     </div>
   );
 }
+
