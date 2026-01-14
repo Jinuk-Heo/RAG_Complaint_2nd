@@ -30,7 +30,7 @@ public class DevSecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())     // CORS 활성화
+                .cors(Customizer.withDefaults()) // CORS 활성화
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();

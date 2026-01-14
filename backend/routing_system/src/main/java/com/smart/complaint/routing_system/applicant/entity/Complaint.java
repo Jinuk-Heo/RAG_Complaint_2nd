@@ -1,13 +1,19 @@
 package com.smart.complaint.routing_system.applicant.entity;
 
 import com.smart.complaint.routing_system.applicant.domain.ComplaintStatus;
-import com.smart.complaint.routing_system.applicant.domain.UrgencyLevel;
+
+import com.smart.complaint.routing_system.applicant.domain.Tag;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -21,14 +27,19 @@ public class Complaint {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // BIGSERIAL 대응
     private Long id;
 
-    @Column(name = "received_at", nullable = false) // DB는 snake_case, 자바는 camelCase
-    private LocalDateTime receivedAt;
+    @Column(name = "applicant_id")
+    private Long applicantId;
 
     @Column(length = 200, nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT", nullable = false) // PostgreSQL TEXT 타입 매핑
     private String body;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tag", nullable = false, columnDefinition = "tag_type")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    private Tag tag;
 
     // DB 컬럼명은 그대로 두고, 자바 변수명은 올바르게 수정해서 매핑
     @Column(name = "answerd_by")
@@ -58,19 +69,12 @@ public class Complaint {
     // Enum 매핑 (String으로 저장/조회)
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, columnDefinition = "complaint_status")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Builder.Default
     private ComplaintStatus status = ComplaintStatus.RECEIVED;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "urgency", nullable = false, columnDefinition = "urgency_level")
-    @Builder.Default
-    private UrgencyLevel urgency = UrgencyLevel.MEDIUM;
-
     @Column(name = "current_department_id")
     private Long currentDepartmentId;
-
-//    @Column(name = "incident_id")
-//    private Long incidentId;
 
     //AI 최초 예측 부서 (성능 측정용)
     @Column(name = "ai_predicted_department_id")
@@ -86,6 +90,9 @@ public class Complaint {
     @Column(name = "incident_link_score", precision = 6, scale = 4)
     private BigDecimal incidentLinkScore;
 
+    @Column(name = "received_at", nullable = false) // DB는 snake_case, 자바는 camelCase
+    private LocalDateTime receivedAt;
+
     @CreationTimestamp
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -97,17 +104,42 @@ public class Complaint {
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
-    //  담당자 지정
+    // [신규] 자식 민원 리스트 추가 (OneToMany)
+    // mappedBy는 ChildComplaint의 필드명 'parentComplaint'와 일치해야 함
+    @Builder.Default
+    @OneToMany(mappedBy = "parentComplaint", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ChildComplaint> childComplaints = new ArrayList<>();
+
+    // 담당자 지정 (Assign)
     public void assignManager(Long managerId) {
         this.answeredBy = managerId;
         this.status = ComplaintStatus.IN_PROGRESS;
     }
 
-    // 답변 등록 및 종결
-    public void completeAnswer(String answerContent) {
-        this.answer = answerContent;
+    // 답변 임시 저장 (Draft)
+    public void updateAnswerDraft(String draftAnswer) {
+        this.answer = draftAnswer;
+        // 상태는 변경하지 않음 (IN_PROGRESS 유지)
+    }
+
+    // 답변 완료 및 종결 (Complete)
+    public void completeAnswer(String finalAnswer) {
+        this.answer = finalAnswer;
         this.answeredAt = LocalDateTime.now();
-        this.status = ComplaintStatus.CLOSED; // 혹은 RESOLVED
+        this.status = ComplaintStatus.RESOLVED;
         this.closedAt = LocalDateTime.now();
+    }
+
+    // 재이관 승인 시 상태 초기화 (Reroute Approved)
+    public void rerouteTo(Long newDepartmentId) {
+        this.currentDepartmentId = newDepartmentId;
+        this.answeredBy = null; // 담당자 초기화
+        this.status = ComplaintStatus.RECEIVED; // 접수 상태로 복귀
+    }
+
+    // 담당자 배정 해제
+    public void releaseManager() {
+        this.answeredBy = null;
+        this.status = ComplaintStatus.RECEIVED;
     }
 }

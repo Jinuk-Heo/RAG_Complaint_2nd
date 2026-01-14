@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Tag(name = "Incident API", description = "사건(군집) 관리 API")
+@Tag(name = "사건 API", description = "사건(군집) 관리 및 조회 API")
 @RestController
 @RequestMapping("/api/agent/incidents")
 @RequiredArgsConstructor

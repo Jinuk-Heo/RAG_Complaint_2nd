@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +15,9 @@ import java.security.Key;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
-    
+
     // jwt 생성키
     @Value("${JWT_SECRET}")
     private String jwtSecret;
@@ -30,10 +33,11 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
-    // JWT 생성
+    // OAUTH JWT 생성
     public String createJwtToken(String name, String email) {
         // 토큰에 담을 정보: 이름, 이메일
         Claims claims = Jwts.claims().setSubject(name);
+        log.info("JWT 토큰 생성 대상 사용자: " + name + ", 이메일: " + email);
         claims.put("email", email);
         // 현재 시간
         Date now = new Date();

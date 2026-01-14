@@ -19,6 +19,8 @@ public class ComplaintResponse {
 
     private String neutralSummary; // 민원 내용 요약(LLM)
 
+    private String managerName;
+
     // Entity -> DTO 변환 생성자
     public ComplaintResponse(Complaint complaint) {
         this.originalId = complaint.getId();
@@ -31,7 +33,6 @@ public class ComplaintResponse {
         this.address = complaint.getAddressText();
         this.receivedAt = complaint.getReceivedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
         this.status = complaint.getStatus();
-        this.urgency = complaint.getUrgency();
 
         if (complaint.getIncident() != null) {
             this.incidentId = String.format("I-2026-%04d", complaint.getIncident().getId());

@@ -15,7 +15,14 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import ApplicantLoginPage from './components/applicant/ApplicantLoginPage';
 import ApplicantMainPage from './components/applicant/ApplicantMainPage';
 import LoginSuccess from './components/applicant/LoginSuccess';
-//import ComplaintForm from './ComplaintForm';
+import ApplicantComplaintListPage from './components/applicant/ApplicantComplaintListPage';
+import ApplicantLogout from './components/applicant/ApplicantLogout';
+import ApplicantComplaintCreatePage from './components/applicant/ApplicantComplaintCreatePage';
+import ApplicantSignUpPage from './components/applicant/ApplicantSignUpPage';
+import ApplicantFindIdPage from './components/applicant/ApplicantFindIdPage';
+import ApplicantResetPwPage from './components/applicant/ApplicantResetPwPage';
+import ApplicantComplaintDetailPage from './components/applicant/ApplicantComplaintDetailPage';
+import ApplicantComplaintsPage from './components/applicant/ApplicantComplaintsPage';
 
 type Page =
   | { type: 'login' }
@@ -96,9 +103,16 @@ function AppContent() {
       <Routes>
         {/* 1. 민원인(Applicant) 페이지 경로 */}
         <Route path="/applicant/login" element={<ApplicantLoginPage />} />
+        <Route path="/applicant/logout" element={<ApplicantLogout />} />
         <Route path="/applicant/login-success" element={<LoginSuccess />} />
         <Route path="/applicant/main" element={<ApplicantMainPage />} />
-        {/* <Route path="/applicant/form" element={<ComplaintForm />} /> */}
+        <Route path="/applicant/complaint" element={<ApplicantComplaintListPage />} />
+        <Route path="/applicant/complaints/new" element={<ApplicantComplaintCreatePage />} />
+        <Route path="/applicant/signup" element={<ApplicantSignUpPage />} />
+        <Route path="/applicant/find-id" element={<ApplicantFindIdPage />} />
+        <Route path="/applicant/find-password" element={<ApplicantResetPwPage />} />
+        <Route path="/applicant/complaints/:id" element={<ApplicantComplaintDetailPage />} />
+        <Route path="/applicant/complaints" element={<ApplicantComplaintsPage />} />
       </Routes>
     );
   }
