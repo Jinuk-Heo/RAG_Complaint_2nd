@@ -37,16 +37,18 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final QComplaintNormalization normalization = QComplaintNormalization.complaintNormalization;
+    private final QUser user = QUser.user;
 
     @Override
     public List<ComplaintResponse> search(Long departmentId, ComplaintSearchCondition condition) {
 
         // Tuple로 조회 (민원 + 요약문)
         List<Tuple> results = queryFactory
-                .select(complaint, normalization.neutralSummary)
+                .select(complaint, normalization.neutralSummary, user.displayName)
                 .from(complaint)
                 // 요약 정보를 가져오기 위해 조인 (없을 수도 있으니 Left Join)
                 .leftJoin(normalization).on(normalization.complaint.eq(complaint))
+                .leftJoin(user).on(complaint.answeredBy.eq(user.id))
                 .where(
                         complaint.currentDepartmentId.eq(departmentId),
                         keywordContains(condition.getKeyword()),
@@ -60,9 +62,11 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
                 .map(tuple -> {
                     Complaint c = tuple.get(complaint);
                     String summary = tuple.get(normalization.neutralSummary);
+                    String managerName = tuple.get(user.displayName);
 
                     ComplaintResponse dto = new ComplaintResponse(c);
                     dto.setNeutralSummary(summary); // 요약문 주입
+                    dto.setManagerName(managerName);
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -149,8 +153,6 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
     private BooleanExpression hasIncident(Boolean hasIncident) {
         if (hasIncident == null) return null;
         return hasIncident ? complaint.incident.isNotNull() : complaint.incident.isNull();
-        // Complaint 엔티티의 Long incidentId -> Incident incident 로 교체하면서
-        // ㅑncidentId 대신 incident 객체 자체의 존재 여부 확인
     }
 
     private BooleanExpression titleContains(String keyword) {
@@ -174,6 +176,10 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
         QIncident incident = QIncident.incident;
         QDepartment department = QDepartment.department;
 
+        // [수정] 자식 민원까지 Fetch Join하여 조회
+        // QueryDSL에서 OneToMany fetch join은 데이터 뻥튀기 주의가 필요하지만,
+        // 여기서는 단건 조회(where id eq)이므로 distinct()를 사용하여 깔끔하게 가져옵니다.
+
         // 1. 사건에 묶인 민원 수 계산 (SubQuery)
         var incidentCountSubQuery = JPAExpressions
                 .select(complaint.count())
@@ -181,36 +187,59 @@ public class ComplaintRepositoryImpl implements ComplaintRepositoryCustom {
                 .where(complaint.incident.id.eq(incident.id));
 
         // 2. 조인 쿼리 실행
-        Tuple result = queryFactory
-                .select(
-                        complaint,
-                        normalization,
-                        incident,
-                        department.name, // 부서명 (없으면 null)
-                        incidentCountSubQuery
-                )
+        Complaint c = queryFactory
+                .select(complaint)
                 .from(complaint)
-                // 정규화 정보 조인 (Left Join: 분석 안 된 민원도 보여야 함)
-                .leftJoin(normalization).on(normalization.complaint.eq(complaint))
-                // 사건 정보 조인 (Left Join: 사건 없는 민원도 보여야 함)
-                .leftJoin(complaint.incident, incident)
-                // 부서 정보 조인 (Left Join)
-                .leftJoin(department).on(complaint.currentDepartmentId.eq(department.id))
+                .leftJoin(complaint.childComplaints).fetchJoin() // [신규] 자식들까지 한방에
+                .leftJoin(complaint.incident, incident).fetchJoin()
                 .where(complaint.id.eq(complaintId))
-                .fetchOne();
+                .fetchOne(); // 여기서 distinct는 Entity Graph상 자동 처리될 수 있으나 필요시 .distinct()
 
-        if (result == null) {
+        if (c == null) {
             return null;
         }
 
-        // 3. 결과 추출 및 DTO 변환
-        Complaint c = result.get(complaint);
-        ComplaintNormalization n = result.get(normalization);
-        Incident i = result.get(incident);
-        String deptName = result.get(department.name);
-        Long iCount = result.get(incidentCountSubQuery);
-        if (iCount == null) iCount = 0L;
+        // 3. 연관 데이터 별도 조회 (Normalization, Department, User)
+        // Entity 조회 후 DTO 변환 시점에 필요한 데이터들
 
-        return new ComplaintDetailResponse(c, n, i, iCount, deptName);
+        // Normalization (Parent Only)
+        ComplaintNormalization n = queryFactory
+                .selectFrom(normalization)
+                .where(normalization.complaint.eq(c))
+                .fetchFirst(); // OneToOne or ManyToOne
+
+        // 부서명
+        String deptName = null;
+        if (c.getCurrentDepartmentId() != null) {
+            deptName = queryFactory
+                    .select(department.name)
+                    .from(department)
+                    .where(department.id.eq(c.getCurrentDepartmentId()))
+                    .fetchOne();
+        }
+
+        // 담당자 이름
+        String mgrName = null;
+        if (c.getAnsweredBy() != null) {
+            mgrName = queryFactory
+                    .select(user.displayName)
+                    .from(user)
+                    .where(user.id.eq(c.getAnsweredBy()))
+                    .fetchOne();
+        }
+
+        // 사건 카운트
+        Long iCount = 0L;
+        if (c.getIncident() != null) {
+            iCount = queryFactory
+                    .select(complaint.count())
+                    .from(complaint)
+                    .where(complaint.incident.eq(c.getIncident()))
+                    .fetchOne();
+        }
+
+        ComplaintDetailResponse res = new ComplaintDetailResponse(c, n, c.getIncident(), iCount, deptName);
+        res.setManagerName(mgrName);
+        return res;
     }
 }

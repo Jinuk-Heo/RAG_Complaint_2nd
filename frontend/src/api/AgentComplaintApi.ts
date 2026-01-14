@@ -1,6 +1,6 @@
 import { springApi } from "../lib/springApi";
 
-export type ComplaintStatus = 'RECEIVED' | 'NORMALIZED' | 'RECOMMENDED' | 'IN_PROGRESS' | 'CLOSED';
+export type ComplaintStatus = 'RECEIVED' | 'NORMALIZED' | 'RECOMMENDED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'CANCELED';
 export type UrgencyLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 export type IncidentStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
 
@@ -20,53 +20,115 @@ export interface ComplaintDto {
   category?: string;
   tags?: string[];
   neutralSummary?: string;
+  managerName?: string;
 }
 
-// 상세 조회용 DTO (백엔드 ComplaintDetailResponse와 매핑)
-export interface ComplaintDetailDto {
-  // 1. 기본 정보
-  id: string;          // 화면 표시용 ID (예: C2026-0004)
-  originalId: number;  // 실제 DB ID
-  title: string;
-  body: string;        // 원문 내용
-  address: string;
+// [신규] 민원 이력 아이템 (부모/자식 공통)
+export interface ComplaintHistoryDto {
+  id: string; // "P-1" or "C-5"
+  originalId: number;
+  parent: boolean;
   receivedAt: string;
+  title: string;
+  body: string;
+  answer?: string;
+  answeredBy?: number;
   status: ComplaintStatus;
-  urgency: UrgencyLevel;
-  departmentName?: string; // 담당 부서
-  category?: string;       // 업무군
 
-  // 2. 정규화 정보
+  // 정규화 정보 (부모만 있음)
   neutralSummary?: string;
   coreRequest?: string;
   coreCause?: string;
   targetObject?: string;
   keywords?: string[];
   locationHint?: string;
+}
 
-  // 3. 사건 정보
-  incidentId?: string;       // 화면 표시용 ID (예: I-2026-001)
+// 상세 조회용 DTO (백엔드 구조 변경 반영)
+export interface ComplaintDetailDto {
+  // 기본 정보
+  id: string;          // 화면 표시용 ID (예: C2026-0004)
+  originalId: number;  // 실제 DB ID
+  title: string;       // 대표 제목
+  address: string;
+  receivedAt: string;  // 최초 접수일
+  status: ComplaintStatus; // 대표 상태
+  urgency: UrgencyLevel;
+  departmentName?: string; // 담당 부서
+  category?: string;       // 업무군
+  managerName?: string;    // 담당자 이름
+
+  // [변경] 이력 리스트로 통합
+  history: ComplaintHistoryDto[];
+
+  // 사건 정보
+  incidentId?: string;       
   incidentTitle?: string;
   incidentStatus?: IncidentStatus;
   incidentComplaintCount?: number;
+
+  // 기존 최상위 필드 호환성 (필요시 사용, 현재는 history에서 가져옴)
+  answeredBy?: number; // 대표 담당자 ID
 }
 
+// ID 파싱
+const parseId = (id: string | number): number => {
+  const idStr = String(id);
+  // "C2026-0008" 형태라면 "-" 뒤의 숫자만 추출
+  if (idStr.includes('-')) {
+    return Number(idStr.split('-').pop());
+  }
+  return Number(idStr);
+};
+
 export const AgentComplaintApi = {
+
+  // 0. 내 정보 가져오기
+  getMe: async () => {
+    const response = await springApi.get<{id: number, displayName: string}>("/api/agent/me");
+    return response.data;
+  },
+
   // 1. [목록] 모든 민원 가져오기
   getAll: async (params?: any) => {
     const response = await springApi.get<ComplaintDto[]>("/api/agent/complaints", { params });
     return response.data;
   },
 
-// 2. [상세] 특정 민원 1개 가져오기
+  // 2. [상세] 특정 민원 1개 가져오기
   getDetail: async (id: string | number) => {
-    // 하이픈(-) 기준으로 뒤에 있는 숫자만 가져오기
-    // 예: "C2026-0004" -> split('-') -> ["C2026", "0004"] -> pop() -> "0004" -> Number() -> 4
-    const idStr = String(id);
-    const realId = idStr.includes('-') ? idStr.split('-').pop() : idStr;
-    
-    // 숫자로 변환해서 요청
-    const response = await springApi.get<ComplaintDetailDto>(`/api/agent/complaints/${Number(realId)}`);
+    const realId = parseId(id);
+    const response = await springApi.get<ComplaintDetailDto>(`/api/agent/complaints/${realId}`);
     return response.data;
-  }
+  },
+
+  // 3. 담당 배정 (Assign)
+  assign: async (id: string | number) => {
+    const realId = parseId(id); // ★ 여기서 변환!
+    await springApi.post(`/api/agent/complaints/${realId}/assign`);
+  },
+
+  // 4. 담당 취소 (Release)
+  release: async (id: string | number) => {
+    const realId = parseId(id); // ★ 여기서 변환!
+    await springApi.post(`/api/agent/complaints/${realId}/release`);
+  },
+
+  // 5. 답변 전송/저장 (Answer)
+  answer: async (id: string | number, content: string, isTemporary: boolean) => {
+    const realId = parseId(id); // ★ 여기서 변환!
+    await springApi.post(`/api/agent/complaints/${realId}/answer`, {
+      answer: content,
+      isTemporary,
+    });
+  },
+
+  // 6. 재이관 요청 (Reroute)
+  reroute: async (id: string | number, targetDeptId: number, reason: string) => {
+    const realId = parseId(id); // ★ 여기서 변환!
+    await springApi.post(`/api/agent/complaints/${realId}/reroute`, {
+      targetDeptId,
+      reason,
+    });
+  },
 };
