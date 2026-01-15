@@ -1,6 +1,5 @@
 package com.smart.complaint.routing_system.applicant.controller;
 
-
 import com.smart.complaint.routing_system.applicant.dto.*;
 import com.smart.complaint.routing_system.applicant.entity.User;
 import com.smart.complaint.routing_system.applicant.repository.ComplaintRepository;
@@ -35,7 +34,7 @@ public class ComplaintController {
     @GetMapping
     public List<ComplaintResponse> getComplaints(
             @ModelAttribute ComplaintSearchCondition condition
-            // @AuthenticationPrincipal UserDetails userDetails
+    // @AuthenticationPrincipal UserDetails userDetails
     ) {
         // 로그인한 사람이 '3번 부서' 소속이라고 가정
         // 나중에는 userDetails에서 진짜 부서 ID
@@ -59,8 +58,7 @@ public class ComplaintController {
     @PostMapping("/{id}/assign")
     public ResponseEntity<String> assignManager(
             @Parameter(description = "민원 ID", example = "1") @PathVariable Long id,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         User user = getSessionUser(request);
         complaintService.assignManager(id, user.getId());
         return ResponseEntity.ok("성공적으로 담당자가 배정되었습니다.");
@@ -74,8 +72,7 @@ public class ComplaintController {
     @PostMapping("/{id}/answer")
     public ResponseEntity<String> saveAnswer(
             @Parameter(description = "민원 ID", example = "1") @PathVariable Long id,
-            @RequestBody ComplaintAnswerRequest dto
-    ) {
+            @RequestBody ComplaintAnswerRequest dto) {
         complaintService.saveAnswer(id, dto);
         String message = dto.isTemporary() ? "답변이 임시 저장되었습니다." : "답변 전송 및 민원 처리가 완료되었습니다.";
         return ResponseEntity.ok(message);
@@ -86,8 +83,7 @@ public class ComplaintController {
     public ResponseEntity<String> requestReroute(
             @Parameter(description = "민원 ID", example = "1") @PathVariable Long id,
             @RequestBody ComplaintRerouteRequest dto,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         User user = getSessionUser(request);
         complaintService.requestReroute(id, dto, user.getId());
         return ResponseEntity.ok("재이관 요청이 접수되었습니다. 관리자 승인 후 반영됩니다.");
@@ -97,8 +93,7 @@ public class ComplaintController {
     @PostMapping("/{id}/release")
     public ResponseEntity<String> releaseManager(
             @Parameter(description = "민원 ID") @PathVariable Long id,
-            HttpServletRequest request
-    ) {
+            HttpServletRequest request) {
         User user = getSessionUser(request);
         complaintService.releaseManager(id, user.getId());
         return ResponseEntity.ok("담당 배정이 취소되었습니다.");
@@ -115,11 +110,11 @@ public class ComplaintController {
         // 개발 편의를 위해 세션이 없으면 에러 대신 임시 유저(ID:1)를 리턴하거나 에러를 낼 수 있음
         // 현재는 엄격하게 체크
         /*
-        if (session == null || session.getAttribute("LOGIN_USER") == null) {
-             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
-        }
-        return (User) session.getAttribute("LOGIN_USER");
-        */
+         * if (session == null || session.getAttribute("LOGIN_USER") == null) {
+         * throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+         * }
+         * return (User) session.getAttribute("LOGIN_USER");
+         */
 
         // [개발용 임시 코드] 세션 없으면 ID 1번 유저라고 가정 (테스트 편의성)
         // 실제 운영 시에는 위 주석 해제하고 아래 코드 삭제 필요

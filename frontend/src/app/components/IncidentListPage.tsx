@@ -136,13 +136,13 @@ export function IncidentListPage({ onViewDetail }: IncidentListPageProps) {
             <Table>
               <TableHeader className="sticky top-0 bg-slate-50 z-10">
                 <TableRow>
-                  <TableHead className="w-[120px]">사건 ID</TableHead>
-                  <TableHead>제목</TableHead>
+                  <TableHead className="w-[120px]  text-center">사건 ID</TableHead>
+                  <TableHead className=' text-center'>제목</TableHead>
                   <TableHead className="text-center w-[100px]">민원수</TableHead>
                   <TableHead className="w-[100px]">상태</TableHead>
                   <TableHead className="w-[120px]">최초 발생일</TableHead>
                   <TableHead className="w-[120px]">최근 발생일</TableHead>
-                  <TableHead className="text-right w-[80px]">액션</TableHead>
+                  <TableHead className="text-right w-[80px] text-center">상세보기</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -169,7 +169,7 @@ export function IncidentListPage({ onViewDetail }: IncidentListPageProps) {
                       <TableCell className="text-xs text-slate-400">{formatDate(incident.lastOccurred)}</TableCell>
                       <TableCell className="text-right">
                         <Button size="sm" variant="ghost" className="text-blue-600 hover:bg-blue-50" onClick={(e) => { e.stopPropagation(); onViewDetail(incident.id); }}>
-                          <Eye className="h-4 w-4" />
+                          <Eye className="h-4 w-4  text-center" />
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -24,7 +24,7 @@ export function Layout({ children, currentPage, onNavigate, userRole }: LayoutPr
 
   const agentMenuItems = [
     { id: 'complaints', label: '민원함', icon: FileText },
-    { id: 'incidents', label: '사건(군집)', icon: Layers },
+    { id: 'incidents', label: '중복 민원', icon: Layers },
     { id: 'dashboard', label: '민원 처리 통계', icon: Layers },
     { id: 'reroute-requests', label: '재이관 요청함', icon: FileText },
     // { id: 'knowledge-base', label: '지식베이스', icon: FileText },
@@ -53,7 +53,7 @@ export function Layout({ children, currentPage, onNavigate, userRole }: LayoutPr
       {/* Sidebar */}
       <aside
         className={`bg-sidebar border-r border-sidebar-border transition-all duration-300 ${
-          sidebarCollapsed ? 'w-16' : 'w-64'
+          sidebarCollapsed ? 'w-16' : 'w-48'
         }`}
       >
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
@@ -122,10 +122,10 @@ export function Layout({ children, currentPage, onNavigate, userRole }: LayoutPr
               <span className="text-base font-bold">민원인 서비스</span>
             </Button>      
                         
-            <Button variant="ghost" size="icon" className="relative">
+            {/* <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive" />
-            </Button>
+            </Button> */}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

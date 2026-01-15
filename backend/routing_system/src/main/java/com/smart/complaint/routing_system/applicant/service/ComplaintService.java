@@ -1,19 +1,32 @@
 package com.smart.complaint.routing_system.applicant.service;
 
+import com.smart.complaint.routing_system.applicant.domain.ComplaintStatus;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintAnswerRequest;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintRerouteRequest;
+import com.smart.complaint.routing_system.applicant.dto.ComplaintSubmitDto;
 import com.smart.complaint.routing_system.applicant.entity.ChildComplaint;
 import com.smart.complaint.routing_system.applicant.entity.Complaint;
 import com.smart.complaint.routing_system.applicant.entity.ComplaintReroute;
 import com.smart.complaint.routing_system.applicant.repository.ComplaintRepository;
 import com.smart.complaint.routing_system.applicant.repository.ComplaintRerouteRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -21,6 +34,7 @@ public class ComplaintService {
 
     private final ComplaintRepository complaintRepository;
     private final ComplaintRerouteRepository rerouteRepository;
+    private final RestTemplate restTemplate;
 
     /**
      * 1. 담당자 배정 (Assign)
@@ -31,7 +45,8 @@ public class ComplaintService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 민원을 찾을 수 없습니다. ID=" + complaintId));
 
         // 이미 다른 담당자가 있는지 체크하는 로직을 추가할 수 있습니다.
-        // if (complaint.getAnsweredBy() != null && !complaint.getAnsweredBy().equals(userId)) { ... }
+        // if (complaint.getAnsweredBy() != null &&
+        // !complaint.getAnsweredBy().equals(userId)) { ... }
 
         complaint.assignManager(userId); // Entity의 편의 메서드 호출
     }
@@ -86,10 +101,10 @@ public class ComplaintService {
         ComplaintReroute reroute = ComplaintReroute.builder()
                 .complaint(complaint)
                 .originDepartmentId(complaint.getCurrentDepartmentId()) // 현재 부서
-                .targetDepartmentId(request.getTargetDeptId())          // 희망 부서
-                .requestReason(request.getReason())                     // 사유
-                .requesterId(userId)                                    // 요청자 (나)
-                .status("PENDING")                                      // 대기 상태
+                .targetDepartmentId(request.getTargetDeptId()) // 희망 부서
+                .requestReason(request.getReason()) // 사유
+                .requesterId(userId) // 요청자 (나)
+                .status("PENDING") // 대기 상태
                 .build();
 
         rerouteRepository.save(reroute);
@@ -107,5 +122,53 @@ public class ComplaintService {
             throw new IllegalStateException("본인이 담당한 민원만 취소할 수 있습니다.");
         }
         complaint.releaseManager();
+    }
+
+    @Transactional
+    public Long receiveComplaint(String applicantId, ComplaintSubmitDto complaintSubmitDto) {
+
+        log.info("민원 접수 프로세스 시작 - 민원인 ID: {}", applicantId);
+
+        Complaint newComplaint = Complaint.builder()
+                .applicantId(Long.parseLong(applicantId))
+                .title(complaintSubmitDto.getTitle())
+                .body(complaintSubmitDto.getBody())
+                .addressText(complaintSubmitDto.getAddressText())
+                .lat(complaintSubmitDto.getLat())
+                .lon(complaintSubmitDto.getLon())
+                .status(ComplaintStatus.RECEIVED) // 테이블의 DEFAULT값과 일치시키거나 열거형 사용
+                .receivedAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        complaintRepository.save(newComplaint);
+        log.info("민원 기본 저장 완료. ID: {}", newComplaint.getId());
+
+        return newComplaint.getId();
+    }
+
+    @Transactional
+    public void analyzeComplaint(Long id, ComplaintSubmitDto complaintSubmitDto) {
+        String pythonUrl = "http://localhost:8000/api/complaints/preprocess";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Map<String, Object> pythonRequest = new HashMap<>();
+        pythonRequest.put("id", id); // 생성된 ID 추가
+        pythonRequest.put("title", complaintSubmitDto.getTitle());
+        pythonRequest.put("content", complaintSubmitDto.getBody());
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(pythonRequest, headers);
+        try {
+            // Python 서버 호출 (POST)
+            ResponseEntity<String> response = restTemplate.postForEntity(pythonUrl, entity, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("AI 분석 및 정규화 데이터 저장 성공: {}", response.getBody());
+            }
+        } catch (Exception e) {
+            log.error("AI 분석 서버 통신 실패 (민원은 접수됨): {}", e.getMessage());
+        }
     }
 }

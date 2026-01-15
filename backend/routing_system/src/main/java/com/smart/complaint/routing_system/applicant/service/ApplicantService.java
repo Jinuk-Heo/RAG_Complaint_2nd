@@ -19,6 +19,7 @@ import com.smart.complaint.routing_system.applicant.config.BusinessException;
 import com.smart.complaint.routing_system.applicant.domain.UserRole;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDetailDto;
 import com.smart.complaint.routing_system.applicant.dto.ComplaintDto;
+import com.smart.complaint.routing_system.applicant.dto.ComplaintHeatMap;
 import com.smart.complaint.routing_system.applicant.dto.UserLoginRequest;
 import com.smart.complaint.routing_system.applicant.dto.UserSignUpDto;
 import com.smart.complaint.routing_system.applicant.entity.Complaint;
@@ -76,13 +77,19 @@ public class ApplicantService {
         return jwtTokenProvider.createJwtToken(String.valueOf(user.getId()), user.getEmail());
     }
 
-    public boolean isUserIdEmailAvailable(String userId, String email) {
+    public boolean isUserIdEmailAvailable(String checkString, String type) {
 
-        if (userRepository.existsByUsername(userId) || userRepository.existsByEmail(email)) {
-            // 중복된 경우 커스텀 예외 발생
-            throw new BusinessException(ErrorMessage.USER_DUPLICATE);
+        if (type.equals("id")) {
+            if (userRepository.existsByUsername(checkString)) {
+                // 중복된 경우 커스텀 예외 발생
+                throw new BusinessException(ErrorMessage.USER_DUPLICATE);
+            }
+        } else {
+            if (userRepository.existsByEmail(checkString)) {
+                throw new BusinessException(ErrorMessage.USER_DUPLICATE);
+            }
         }
-        log.info("사용 가능한 아이디: " + userId);
+
         return true;
     }
 
@@ -91,6 +98,8 @@ public class ApplicantService {
         log.info(email + "사용자 아이디 찾기");
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorMessage.USER_NOT_FOUND));
+
+        log.info("찾은 사용자: " + user.getUsername());
 
         String visible = user.getUsername().substring(0, 3);
         String masked = "*".repeat(user.getUsername().length() - 3);
@@ -146,18 +155,24 @@ public class ApplicantService {
 
     public ComplaintDetailDto getComplaintDetails(Long complaintId) {
 
-        log.info("사용자: "+complaintId);
+        log.info("사용자: " + complaintId);
         ComplaintDetailDto foundComplaint = complaintRepository.findById(complaintId)
-            .map(ComplaintDetailDto::from)
-            .orElseThrow(() -> new BusinessException(ErrorMessage.COMPLAINT_NOT_FOUND));
+                .map(ComplaintDetailDto::from)
+                .orElseThrow(() -> new BusinessException(ErrorMessage.COMPLAINT_NOT_FOUND));
 
         return foundComplaint;
     }
 
+    public List<ComplaintDetailDto> getAllComplaints(String applicantId, String keyword) {
 
-    public List<ComplaintDetailDto> getAllComplaints(Long applicantId, String keyword) {
+        Long id = Long.parseLong(applicantId);
 
+        return complaintRepository.findAllByApplicantId(id, keyword);
+    }
 
-        return complaintRepository.findAllByApplicantId(applicantId, null);
+    public List<ComplaintHeatMap> getAllComplaintsWithLatLon(String applicantId) {
+        Long id = Long.parseLong(applicantId);
+
+        return complaintRepository.getAllComplaintsWithLatLon(id);
     }
 }
