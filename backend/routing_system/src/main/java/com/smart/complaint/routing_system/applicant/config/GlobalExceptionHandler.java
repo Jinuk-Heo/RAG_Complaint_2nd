@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
         ErrorResponse response = ErrorResponse.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .errorCode("GLOBAL_ERROR")
-                .message("예상치 못한 오류가 발생했습니다.")
+                .message("에러 메세지 : "+e.getMessage())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
