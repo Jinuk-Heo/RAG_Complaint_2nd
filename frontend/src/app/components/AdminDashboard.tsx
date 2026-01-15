@@ -332,7 +332,7 @@ export function AdminDashboard() {
                       <div className="text-xs text-muted-foreground">{incident.id}</div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <Badge variant="secondary">{incident.count}건</Badge>
+                      {/* <Badge variant="secondary">{incident.count}건</Badge> */}
                       <Badge className="bg-red-100 text-red-700 text-xs">{incident.trend}</Badge>
                     </div>
                   </div>
