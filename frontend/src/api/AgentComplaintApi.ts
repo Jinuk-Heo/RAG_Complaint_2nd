@@ -16,7 +16,7 @@ export interface ComplaintDto {
   managerName?: string;
 }
 
-// [신규] 민원 이력 아이템 (부모/자식 공통)
+// 민원 이력 아이템 (부모/자식 공통)
 export interface ComplaintHistoryDto {
   id: string; // "P-1" or "C-5"
   originalId: number;
@@ -51,7 +51,7 @@ export interface ComplaintDetailDto {
   category?: string;       // 업무군
   managerName?: string;    // 담당자 이름
 
-  // [변경] 이력 리스트로 통합
+  // 이력 리스트로 통합
   history: ComplaintHistoryDto[];
 
   // 사건 정보
