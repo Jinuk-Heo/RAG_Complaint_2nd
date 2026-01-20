@@ -77,7 +77,7 @@ public class ComplaintController {
         return ResponseEntity.ok(message);
     }
 
-    @Operation(summary = "재이관 요청 (Reroute)", description = "타 부서 소관인 경우 재이관을 요청합니다. (관리자 승인 대기 상태가 됨)")
+    @Operation(summary = "이관 요청 (Reroute)", description = "타 부서 소관인 경우 이관을 요청합니다. (관리자 승인 대기 상태가 됨)")
     @PostMapping("/{id}/reroute")
     public ResponseEntity<String> requestReroute(
             @Parameter(description = "민원 ID", example = "1") @PathVariable Long id,
@@ -85,7 +85,7 @@ public class ComplaintController {
             HttpServletRequest request) {
         User user = getSessionUser(request);
         complaintService.requestReroute(id, dto, user.getId());
-        return ResponseEntity.ok("재이관 요청이 접수되었습니다. 관리자 승인 후 반영됩니다.");
+        return ResponseEntity.ok("이관 요청이 접수되었습니다. 관리자 승인 후 반영됩니다.");
     }
 
     @Operation(summary = "담당 취소 (Release)", description = "배정받은 민원을 포기하고 다시 접수 상태로 되돌립니다.")
